@@ -41,7 +41,7 @@ def get_args():
                         default='data/test/' + sub_directory + '/classifier_model.pickle')
     parser.add_argument('-rating_parameters_path', "--rating_parameters_path",
                         help="Path rating classifiers parameters",
-                        default='data/test/' + sub_directory + '/test_SVM_parameters/rate_classifiers/')
+                        default='data/test/' + sub_directory + '/test_SVM_parameters/rate_classifiers')
     return parser.parse_args()
 
 

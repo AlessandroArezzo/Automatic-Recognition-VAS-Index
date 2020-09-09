@@ -36,7 +36,7 @@ class ModelClassifier:
         n_kernels_preliminary_clustering=len(means_gmm_preliminary_clustering)
         clusters_videos = []
         for seq_num in np.arange(num_test_videos):
-            fisher_vector = fisher_vectors[seq_num]
+            fisher_vector = fisher_vectors[seq_num][0]
             num_lndks = fisher_vector.shape[2]
             video_clusters = []
             for num_frame in np.arange(fisher_vector.shape[0]):
