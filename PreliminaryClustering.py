@@ -6,6 +6,7 @@ import matplotlib.pyplot as plt
 import matplotlib
 matplotlib.use('Agg')
 
+"""Class that is responsible for obtaining the relevant configurations for the classification of the VAS index. """
 class PreliminaryClustering:
     def __init__(self):
         self.gmm=None
@@ -167,7 +168,8 @@ class PreliminaryClustering:
         if plot_and_save_histo:
             self.__plot_and_save_histograms(histograms_of_videos, histo_figures_path)
         if preliminary_clustering_dump_path is not None:
-            with open(preliminary_clustering_dump_path, 'wb') as handle:
+            with open(preliminary_clustering_dump_path+'/'+str(n_kernels)+
+                                                         '_kernels_preliminary_clustering.pickle', 'wb') as handle:
                 pickle.dump(self, handle, protocol=pickle.HIGHEST_PROTOCOL)
 
     @staticmethod

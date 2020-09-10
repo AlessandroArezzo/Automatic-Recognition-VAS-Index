@@ -75,7 +75,7 @@ class FisherVectorGMM:
 
     # fit GMM and store params of fitted model
     self.gmm = GaussianMixture(n_components=self.n_kernels, covariance_type=self.covariance_type, max_iter=1000,
-                               n_init=n_init, verbose=verbose).fit(X)
+                               n_init=n_init).fit(X)
     gmm=self.gmm
     self.covars = gmm.covariances_
     self.means = gmm.means_
