@@ -65,14 +65,18 @@ def get_args():
                         help="Path rating classifiers parameters",
                         default='data/test/' + sub_directory + '/test_' + type_classifier + '_parameters/rate_classifiers')
     parser.add_argument('-scores_result_kernels_path', "--scores_result_kernels_path",
-                        help="Path max rates with different number of kernels for preliminary clustering",
+                        help="Path max scores with different number of kernels for preliminary clustering",
                         default='data/test/' + sub_directory + '/score_results')
     return parser.parse_args()
 
+"""Check if all files and all directory passed as parameters existing"""
 def check_existing_dump_paths(files_paths, dir_paths):
     assert all(os.path.isfile(file_path) for file_path in files_paths)
     assert all(os.path.isdir(dir_path) for dir_path in dir_paths)
 
+"""Given a specific number of kernels for the preliminary clustering, 
+compare the scores obtained by varying the gamma and regularization parameters used for the classifier (SVM or SVR).
+Save the results in csv files """
 def test_best_classifier_parameters(args, n_kernels, print_score_result = True, plot_and_save_histo=False):
     type_classifier = args.type_classifier
     threshold_neutral = args.threshold_neutral
@@ -115,11 +119,15 @@ def test_best_classifier_parameters(args, n_kernels, print_score_result = True, 
                 optimal_gamma_parameter = gamma
     return max_rate, optimal_regularization_parameter, optimal_gamma_parameter
 
+"""Remove .pickle file in path"""
 def clean_experiment_files(models_dump_path):
     experiment_files = glob.glob(models_dump_path + "/*.pickle")
     for f in experiment_files:
         os.remove(f)
 
+"""Compare the best scores obtained by varying the gamma and regularization parameters of the classifier 
+according to the number of kernels used for the preliminary clustering. 
+Save the results in a csv file containing the comparison of the best scores found for each number of kernels """
 def compare_performance_different_number_clusters(args):
     n_kernels_to_test=np.arange(100,1050,50)
     out_of_scores_path=args.scores_result_kernels_path+'/scores_number_kernels.csv'
@@ -141,7 +149,7 @@ def compare_performance_different_number_clusters(args):
 
 if __name__ == '__main__':
     args = get_args()
-    type_tests=args.type_test
+    type_tests = args.type_test
     assert type_tests == 0 or type_tests == 1
     if type_tests == 0:
         check_existing_dump_paths(files_paths=[args.coord_df_path, args.seq_df_path], dir_paths=[args.histo_figures_path,

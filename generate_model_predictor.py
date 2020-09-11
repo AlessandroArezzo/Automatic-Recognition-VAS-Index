@@ -31,7 +31,7 @@ def get_args():
                         help="Threshold for neutral configuration in preliminary clustering",
                         default=0.3, type=float)
     parser.add_argument('-threshold_relevant', "--threshold_relevant",
-                        help="Threshold for relevant configuration in preliminaryclustering",
+                        help="Threshold for relevant configuration in preliminary clustering",
                         default=0.2, type=float)
     #Classifier info
     parser.add_argument('-type_classifier', "--type_classifier",
@@ -49,14 +49,13 @@ def get_args():
                         default='data/classifier')
     return parser.parse_args()
 
-
 if __name__ == '__main__':
     args = get_args()
     assert os.path.isdir(args.models_path)
     n_kernels_preliminary_clustering=args.n_kernels_preliminary_clustering
     if args.load_preliminary_clustering:
-        print("Read preliminary clustering info from file...")
-        preliminary_clustering = PreliminaryClustering.load_from_pickle(args.models_path+'/+'+str(n_kernels_preliminary_clustering)+
+        print("Read preliminary clustering from file...")
+        preliminary_clustering = PreliminaryClustering.load_from_pickle(args.models_path+'/'+str(n_kernels_preliminary_clustering)+
                                                                                              '_kernels_preliminary_clustering.pickle')
     else:
         print("Execute preliminary clustering with #kernels="+str(n_kernels_preliminary_clustering)+"...")
@@ -77,3 +76,9 @@ if __name__ == '__main__':
     classifier.train_model(percent_training_set=args.percent_training_set, regularization_parameter=args.regularization_parameter,
                            gamma_parameter=args.gamma_parameter, classifier_dump_path=model_classifier_path)
     print(args.type_classifier+" trained and saved in model_classifier_path")
+    path_scores_parameters = args.models_path+'/'+str(n_kernels_preliminary_clustering)+"_"\
+                             +str(args.regularization_parameter)+'_'+str(args.gamma_parameter)+'_scores.csv'
+    print("Calculate scores for trained classifier...")
+    rate = classifier.calculate_rate_model(percent_data_set=1-args.percent_training_set,
+                                           path_scores_parameters=path_scores_parameters)
+    print("Rate classifier is "+str(rate))

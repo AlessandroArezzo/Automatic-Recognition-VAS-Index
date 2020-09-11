@@ -130,7 +130,7 @@ class ModelClassifier:
             self.__init_data_sequences()
         self.classifier = self.__train_classifier(percent_training_set, regularization_parameter, gamma_parameter)
         if classifier_dump_path is not None:
-            with open(classifier_dump_path+'/'+self.type_classifier+'_classifier.pickle', 'wb') as handle:
+            with open(classifier_dump_path, 'wb') as handle:
                 pickle.dump(self.classifier, handle, protocol=pickle.HIGHEST_PROTOCOL)
 
     def calculate_rate_model(self, percent_data_set, path_scores_parameters=None):
