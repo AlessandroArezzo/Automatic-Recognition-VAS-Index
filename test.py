@@ -85,15 +85,13 @@ def test_best_classifier_parameters(args, n_kernels, print_score_result = True, 
            0 < threshold_relevant < 1
     print("Experiments for #kernels= " + str(n_kernels))
     print("-- Preliminary clustering for #kernels= " + str(n_kernels))
-    preliminary_clustering = PreliminaryClustering()
-    preliminary_clustering.execute_preliminary_clustering(coord_df_path=args.coord_df_path,
+    preliminary_clustering = PreliminaryClustering(coord_df_path=args.coord_df_path,
                                                           seq_df_path=args.seq_df_path, num_lndks=args.num_lndks,
                                                           selected_lndks_idx=args.selected_lndks_idx,
                                                           num_test_videos=args.num_test_videos,
-                                                          n_kernels=n_kernels,
-                                                          histo_figures_path=args.histo_figures_path,
-                                                          threshold_neutral=threshold_neutral,
-                                                          threshold_relevant=threshold_relevant,
+                                                          n_kernels=n_kernels, threshold_neutral=threshold_neutral,
+                                                          threshold_relevant=threshold_relevant)
+    preliminary_clustering.execute_preliminary_clustering(histo_figures_path=args.histo_figures_path,
                                                           plot_and_save_histo=plot_and_save_histo,
                                                           preliminary_clustering_dump_path=args.models_dump_path)
     regularization_test_parameters = np.arange(10, 1010, 10)

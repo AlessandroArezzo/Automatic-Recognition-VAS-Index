@@ -59,15 +59,14 @@ if __name__ == '__main__':
                                                                                              '_kernels_preliminary_clustering.pickle')
     else:
         print("Execute preliminary clustering with #kernels="+str(n_kernels_preliminary_clustering)+"...")
-        preliminary_clustering = PreliminaryClustering()
-        preliminary_clustering.execute_preliminary_clustering(coord_df_path=args.coord_df_path,
+        preliminary_clustering = PreliminaryClustering(coord_df_path=args.coord_df_path,
                                                           seq_df_path=args.seq_df_path, num_lndks=args.num_lndks,
                                                           selected_lndks_idx=args.selected_lndks_idx,
                                                           num_test_videos=args.num_test_videos,
                                                           n_kernels=n_kernels_preliminary_clustering,
                                                           threshold_neutral=args.threshold_neutral,
-                                                          threshold_relevant=args.threshold_relevant,
-                                                          preliminary_clustering_dump_path=args.models_path)
+                                                          threshold_relevant=args.threshold_relevant)
+        preliminary_clustering.execute_preliminary_clustering(preliminary_clustering_dump_path=args.models_path)
     model_classifier_path = args.models_path+'/'+args.type_classifier+'_'+str(n_kernels_preliminary_clustering)+'_kernels.pickle'
     classifier = ModelClassifier(type_classifier=args.type_classifier, seq_df_path=args.seq_df_path,
                                  num_test_videos=args.num_test_videos,
