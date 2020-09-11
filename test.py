@@ -91,6 +91,7 @@ def test_best_classifier_parameters(n_kernels, print_score_result=True, plot_and
     max_rate = optimal_regularization_parameter = optimal_gamma_parameter = 0
     classifier = ModelClassifier(type_classifier=type_classifier, seq_df_path=seq_df_path,
                                  num_test_videos=num_test_videos,preliminary_clustering=preliminary_clustering)
+    score_path = None
     for regularization in regularization_test_parameters:
         for gamma in gamma_test_parameters:
             print("-- Train model classifier for #kernels= " + str(n_kernels) + ' with C= ' + str(regularization) +
