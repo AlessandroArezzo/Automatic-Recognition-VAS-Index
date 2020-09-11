@@ -11,9 +11,9 @@ class ModelClassifier:
     def __init__(self, seq_df_path, num_test_videos, preliminary_clustering, type_classifier='SVM'):
         assert type_classifier == 'SVM' or type_classifier == 'SVR'
         self.type_classifier = type_classifier # Classifier to use: "SVM" or "SVR"
-        self.seq_df_path = seq_df_path
-        self.num_test_videos = num_test_videos
-        self.preliminary_clustering = preliminary_clustering
+        self.seq_df_path = seq_df_path # Path of csv file contained sequences informations
+        self.num_test_videos = num_test_videos # Number of videos of the dataset to considered to the clustering
+        self.preliminary_clustering = preliminary_clustering # Preliminary clustering performed
         self.classifier = None
         self.gmm_sequences = None
         self.fv_sequences = None
