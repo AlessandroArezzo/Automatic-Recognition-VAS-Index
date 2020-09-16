@@ -20,10 +20,10 @@ def get_args():
                         help="Determine if the classifier must be trained maximing the resulting score", default=True,
                         type=bool)
     parser.add_argument('-n_kernels_preliminary_clustering', "--n_kernels_preliminary_clustering",
-                        help="Number of kernels to use for GMM of the preliminary clustering", default=100, type=int)
+                        help="Number of kernels to use for GMM of the preliminary clustering", default=200, type=int)
     parser.add_argument('-threshold_neutral', "--threshold_neutral",
                         help="Threshold for neutral configuration in preliminary clustering",
-                        default=0.02, type=float)
+                        default=0.03, type=float)
     parser.add_argument('-'
                         '', "--save_histo_figures",
                         help="Determines if histograms are to be saved during preliminary clustering phases",
@@ -52,7 +52,6 @@ num_test_videos = 200
 # Preliminary clustering info and paths
 n_kernels_preliminary_clustering = args.n_kernels_preliminary_clustering
 threshold_neutral = args.threshold_neutral
-#threshold_relevant = args.threshold_relevant
 dump_preliminary_clustering = args.dump_preliminary_clustering
 load_preliminary_clustering = args.load_preliminary_clustering
 save_histo_figures = args.save_histo_figures
@@ -79,11 +78,11 @@ if __name__ == '__main__':
                                                        seq_df_path=seq_df_path, num_lndks=num_lndks,
                                                        selected_lndks_idx=selected_lndks_idx,
                                                        num_test_videos=num_test_videos,
-                                                       n_kernels=n_kernels_preliminary_clustering,
-                                                       threshold_neutral=threshold_neutral)
+                                                       n_kernels=n_kernels_preliminary_clustering)
         preliminary_clustering_dump_path = preliminary_clustering_path if dump_preliminary_clustering == True else None
         preliminary_clustering.execute_preliminary_clustering( plot_and_save_histo=save_histo_figures,
-           histo_figures_path= histo_figures_path, preliminary_clustering_dump_path=preliminary_clustering_dump_path)
+           histo_figures_path= histo_figures_path, preliminary_clustering_dump_path=preliminary_clustering_dump_path,
+           threshold_neutral=threshold_neutral)
     classifier = ModelClassifier(type_classifier=type_classifier, seq_df_path=seq_df_path,
                                  num_test_videos=num_test_videos,
                                  preliminary_clustering=preliminary_clustering)

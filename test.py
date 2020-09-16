@@ -123,7 +123,7 @@ Save the results in a csv file containing the comparison of the best scores foun
 
 
 def compare_performance_different_number_clusters():
-    n_kernels_to_test = np.arange(100, 200, 50)
+    n_kernels_to_test = np.arange(50, 800, 50)
     out_df_scores = pd.DataFrame(columns=['n_kernels', 'optimal_regularization', 'optimal_gamma', 'max_score'])
     max_score = optimal_n_kernels = optimal_regularization_parameter = optimal_gamma_parameter = 0
     for n_kernels in n_kernels_to_test:
