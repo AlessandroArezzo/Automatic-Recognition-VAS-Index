@@ -1,5 +1,4 @@
 import argparse
-import os
 import numpy as np
 from PreliminaryClustering import PreliminaryClustering
 from ModelClassifier import ModelClassifier
@@ -17,15 +16,16 @@ def get_args():
     parser.add_argument('-dump_preliminary_clustering', "--dump_preliminary_clustering",
                         help="Determine if preliminary clustering is must be saved in a pickle file", default=True,
                         type=bool)
+    parser.add_argument('-train_by_max_score', "--train_by_max_score",
+                        help="Determine if the classifier must be trained maximing the resulting score", default=True,
+                        type=bool)
     parser.add_argument('-n_kernels_preliminary_clustering', "--n_kernels_preliminary_clustering",
                         help="Number of kernels to use for GMM of the preliminary clustering", default=100, type=int)
     parser.add_argument('-threshold_neutral', "--threshold_neutral",
                         help="Threshold for neutral configuration in preliminary clustering",
-                        default=0.3, type=float)
-    parser.add_argument('-threshold_relevant', "--threshold_relevant",
-                        help="Threshold for relevant configuration in preliminary clustering",
-                        default=0.2, type=float)
-    parser.add_argument('-save_histo_figures', "--save_histo_figures",
+                        default=0.02, type=float)
+    parser.add_argument('-'
+                        '', "--save_histo_figures",
                         help="Determines if histograms are to be saved during preliminary clustering phases",
                         default=False, type=bool)
     parser.add_argument('-type_classifier', "--type_classifier",
@@ -52,7 +52,7 @@ num_test_videos = 200
 # Preliminary clustering info and paths
 n_kernels_preliminary_clustering = args.n_kernels_preliminary_clustering
 threshold_neutral = args.threshold_neutral
-threshold_relevant = args.threshold_relevant
+#threshold_relevant = args.threshold_relevant
 dump_preliminary_clustering = args.dump_preliminary_clustering
 load_preliminary_clustering = args.load_preliminary_clustering
 save_histo_figures = args.save_histo_figures
@@ -61,11 +61,11 @@ histo_figures_path = "data/classifier/" + sub_directory + "/figures/histograms" 
 preliminary_clustering_path = "data/classifier/" + sub_directory + "/preliminary_clustering.pickle"
 # Model classifier info and paths
 type_classifier = args.type_classifier
+train_by_max_score=args.train_by_max_score
 regularization_parameter = args.regularization_parameter
 gamma_parameter = args.gamma_parameter
 classifier_path = "data/classifier/" + sub_directory + "/" + type_classifier + "_classifier.pickle"
-path_scores_parameters = "data/classifier/" + sub_directory + "/" + str(n_kernels_preliminary_clustering) + "_" \
-                         + str(args.regularization_parameter) + "_" + str(args.gamma_parameter) + "_scores.csv"
+path_scores_parameters = "data/classifier/" + sub_directory + "/scores.csv"
 
 if __name__ == '__main__':
     args = get_args()
@@ -80,8 +80,7 @@ if __name__ == '__main__':
                                                        selected_lndks_idx=selected_lndks_idx,
                                                        num_test_videos=num_test_videos,
                                                        n_kernels=n_kernels_preliminary_clustering,
-                                                       threshold_neutral=threshold_neutral,
-                                                       threshold_relevant=threshold_relevant)
+                                                       threshold_neutral=threshold_neutral)
         preliminary_clustering_dump_path = preliminary_clustering_path if dump_preliminary_clustering == True else None
         preliminary_clustering.execute_preliminary_clustering( plot_and_save_histo=save_histo_figures,
            histo_figures_path= histo_figures_path, preliminary_clustering_dump_path=preliminary_clustering_dump_path)
@@ -90,7 +89,8 @@ if __name__ == '__main__':
                                  preliminary_clustering=preliminary_clustering)
     print("Train and save " + type_classifier + " model...")
     classifier.train_model(percent_training_set=percent_training_set, regularization_parameter=regularization_parameter,
-                           gamma_parameter=gamma_parameter, classifier_dump_path=classifier_path)
+                           gamma_parameter=gamma_parameter, train_by_max_score=train_by_max_score,
+                           classifier_dump_path=classifier_path)
     print(args.type_classifier + " trained and saved in model_classifier_path")
     print("Calculate scores for trained classifier...")
     rate = classifier.calculate_rate_model(percent_data_set=1 - percent_training_set,
