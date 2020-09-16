@@ -36,7 +36,7 @@ class ModelClassifier:
     Return a list with the multivectors that describe the sequences of the num test videos of the dataset """
     def __get_multivector_sequences_descriptor(self, means_gmm_preliminary_clustering, relevant_configurations, fisher_vectors):
         print("---- Process multivector descriptor for sequences... ----")
-        n_kernels_preliminary_clustering=len(means_gmm_preliminary_clustering)
+        n_kernels_preliminary_clustering = len(means_gmm_preliminary_clustering)
         clusters_videos = []
         for seq_num in np.arange(self.num_test_videos):
             fisher_vector = fisher_vectors[seq_num][0]
@@ -68,14 +68,15 @@ class ModelClassifier:
         Return the fitted GMM """
     def __train_gmm_sequences(self, clusters_videos):
         print("---- Train GMM for sequences description... ----")
-        n_kernels_gmm = min([vector.shape[1] for vector in clusters_videos])
-        return FisherVectorGMM(n_kernels=n_kernels_gmm).fit(self.__get_sequences_features(clusters_videos), n_init=10000)
+        video_to_considered=[vector for vector in clusters_videos if vector.shape[1] > 0]
+        n_kernels_gmm = min([vector.shape[1] for vector in video_to_considered])
+        return FisherVectorGMM(n_kernels=n_kernels_gmm).fit(self.__get_sequences_features(video_to_considered), n_init=10000)
 
     """Calculate the fisher vector for each sequence using GMM fitted and the multivector that describe the sequence. 
     Return a list contained the fisher vectors of all sequences """
     def __calculate_fv_sequences(self, clusters_videos):
         print("---- Calculate fisher vectors for sequences in dataset... ----")
-        n_kernels_gmm=len(self.gmm_sequences.gmm.means_)
+        n_kernels_gmm = len(self.gmm_sequences.gmm.means_)
         fisher_vectors = []
         for num_video in np.arange(len(clusters_videos)):
             if clusters_videos[num_video].shape[1] > 0:
@@ -114,6 +115,7 @@ class ModelClassifier:
         return classifier
 
     def __init_data_sequences(self):
+
         gmm_preliminary_clustering = self.preliminary_clustering.gmm
         relevant_configurations = self.preliminary_clustering.index_relevant_configurations
         fisher_vectors = self.preliminary_clustering.fisher_vectors
@@ -123,12 +125,30 @@ class ModelClassifier:
         self.fv_sequences = self.__calculate_fv_sequences(clusters_videos)
         self.vas_sequences = self.__get_vas_videos_sequences(clusters_videos)
 
+    def __train_classifier_maximizing_score(self, percent_training_set):
+        print("Find parameters "+self.type_classifier+" that maximizes the total score... ")
+        regularization_test_parameters = np.arange(10, 1010, 10)
+        gamma_test_parameters = np.arange(0.1, 1.1, 0.1)
+        max_rate = 0
+        max_classifier = None
+        for regularization in regularization_test_parameters:
+            for gamma in gamma_test_parameters:
+                self.classifier = self.__train_classifier(percent_training_set, regularization, gamma)
+                current_rate = self.calculate_rate_model(percent_data_set=1 - percent_training_set)
+                if current_rate > max_rate:
+                    max_classifier = self.classifier
+                    max_rate = current_rate
+        return max_classifier
+
     """Performs the classifier training procedure based on what was done in the preliminary clustering phase"""
-    def train_model(self, percent_training_set, regularization_parameter,
-                    gamma_parameter, classifier_dump_path=None):
+    def train_model(self, percent_training_set=0.85, regularization_parameter=1,
+                    gamma_parameter='scale', train_by_max_score=True, classifier_dump_path=None):
         if self.fv_sequences == None or self.vas_sequences == None:
             self.__init_data_sequences()
-        self.classifier = self.__train_classifier(percent_training_set, regularization_parameter, gamma_parameter)
+        if train_by_max_score == True:
+            self.classifier = self.__train_classifier_maximizing_score(percent_training_set=percent_training_set)
+        else:
+            self.classifier = self.__train_classifier(percent_training_set, regularization_parameter, gamma_parameter)
         if classifier_dump_path is not None:
             with open(classifier_dump_path, 'wb') as handle:
                 pickle.dump(self.classifier, handle, protocol=pickle.HIGHEST_PROTOCOL)

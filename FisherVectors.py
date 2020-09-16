@@ -7,11 +7,10 @@ class FisherVectorGMM:
   def __init__(self, n_kernels=1, covariance_type='diag'):
     assert covariance_type in ['diag', 'full']
     assert n_kernels > 0
-
     self.n_kernels = n_kernels
     self.covariance_type = covariance_type
     self.fitted = False
-    self.gmm=None
+    self.gmm = None
 
   def score(self, X):
     return self.gmm.bic(X.reshape(-1, X.shape[-1]))

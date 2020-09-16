@@ -9,7 +9,7 @@ matplotlib.use('Agg')
 """Class that is responsible for obtaining the relevant configurations for the classification of the VAS index. """
 class PreliminaryClustering:
     def __init__(self,coord_df_path, seq_df_path, num_lndks, selected_lndks_idx, num_test_videos,
-                                       n_kernels, threshold_neutral, threshold_relevant):
+                                       n_kernels, threshold_neutral):
         self.coord_df_path = coord_df_path # Path of csv file contained coordinates of the landmaks
         self.seq_df_path = seq_df_path # Path of csv file contained sequences informations
         self.num_lndks = num_lndks # Number of landmarks for each frame of the videos in the dataset
@@ -17,7 +17,7 @@ class PreliminaryClustering:
         self.num_test_videos = num_test_videos # Number of videos of the dataset to considered to the clustering
         self.n_kernels = n_kernels # Number of kernels of the gmm to trained
         self.threshold_neutral = threshold_neutral # Thresholds to use for calculate the relevant configurations
-        self.threshold_relevant=threshold_relevant
+        #self.threshold_relevant=threshold_relevant
         self.gmm = None
         self.fisher_vectors = None
         self.index_relevant_configurations = None
@@ -119,33 +119,14 @@ class PreliminaryClustering:
     def __generate_relevant_and_neutral_configurations(self, histograms_of_videos):
         print("---- Process relevant and neutral configurations... ----")
         seq_df = pd.read_csv(self.seq_df_path)
-        configurations_neutral_videos = configurations_relevant_videos = [] #Contain indexes of the configurations potentially neutral and relevant to classify vas index
-        index_neutral_configurations = [] #Contains indexes of the neutral configuration
+        index_neutral_configurations  = []
         for seq_num in np.arange(self.num_test_videos):
             vas = seq_df.iloc[seq_num][1]
             hist = histograms_of_videos[seq_num]
-            considered_config_video = []
             if vas == 0:
                 for j in np.arange(self.n_kernels):
-                    """If the vas index is zero and the configuration occurs with a frequency greater than 0.5 
-                    then the configuration is considered neutral.
-                    If the vas index is zero and the configuration occurs with a frequency greater than the neutral
-                    threshold then the configuration is considered as potentially neutral """
-                    if hist[j] > 0.05 and j not in index_neutral_configurations:
+                    if hist[j] > self.threshold_neutral and j not in index_neutral_configurations:
                         index_neutral_configurations.append(j)
-                    elif hist[j] > self.threshold_neutral:
-                        considered_config_video.append(j)
-                configurations_neutral_videos.append(considered_config_video)
-            else:
-                for j in np.arange(self.n_kernels):
-                    if hist[j] < self.threshold_relevant:
-                        considered_config_video.append(j)
-                configurations_relevant_videos.append(considered_config_video)
-        for configurations in configurations_neutral_videos:
-            for config in configurations:
-                if all(config in sublist for sublist in
-                       configurations_relevant_videos) and config not in index_neutral_configurations:
-                    index_neutral_configurations.append(config)
         index_relevant_configurations = [x for x in np.arange(self.n_kernels) if x not in index_neutral_configurations]
         return index_relevant_configurations , index_neutral_configurations
 

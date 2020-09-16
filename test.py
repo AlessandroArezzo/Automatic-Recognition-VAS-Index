@@ -23,10 +23,10 @@ def get_args():
                         help="Number of kernels to use for GMM of the preliminary clustering", default=100, type=int)
     parser.add_argument('-threshold_neutral', "--threshold_neutral",
                         help="Threshold for neutral configuration in preliminary clustering",
-                        default=0.3, type=float)
-    parser.add_argument('-threshold_relevant', "--threshold_relevant",
+                        default=0.03, type=float)
+    """parser.add_argument('-threshold_relevant', "--threshold_relevant",
                         help="Threshold for relevant configuration in preliminary clustering",
-                        default=0.2, type=float)
+                        default=0.2, type=float)"""
     parser.add_argument('-save_histo_figures', "--save_histo_figures",
                         help="Determines if histograms are to be saved during preliminary clustering phases",
                         default=False, type=bool)
@@ -48,7 +48,7 @@ selected_lndks_idx = np.arange(66)
 num_test_videos = 200
 # Preliminary clustering info and paths
 threshold_neutral = args.threshold_neutral
-threshold_relevant = args.threshold_relevant
+#threshold_relevant = args.threshold_relevant
 n_kernels_preliminary_clustering = args.n_kernels_preliminary_clustering  # For type_test = 0
 save_histo_figures = args.save_histo_figures # For type_test = 0
 histo_figures_path = "data/test/"+str(n_kernels_preliminary_clustering)+"_kernels/figures/histograms" # For save_histo_figures = True
@@ -83,7 +83,8 @@ def test_best_classifier_parameters(n_kernels, print_score_result=True, plot_and
                                                    selected_lndks_idx=selected_lndks_idx,
                                                    num_test_videos=num_test_videos,
                                                    n_kernels=n_kernels, threshold_neutral=threshold_neutral,
-                                                   threshold_relevant=threshold_relevant)
+                                                   #threshold_relevant=threshold_relevant
+                                                   )
     preliminary_clustering.execute_preliminary_clustering(histo_figures_path=histo_figures_path,
                                                           plot_and_save_histo=plot_and_save_histo)
     regularization_test_parameters = np.arange(10, 1010, 10)
