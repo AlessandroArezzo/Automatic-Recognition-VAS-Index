@@ -8,18 +8,16 @@ matplotlib.use('Agg')
 
 """Class that is responsible for obtaining the relevant configurations for the classification of the VAS index. """
 class PreliminaryClustering:
-    def __init__(self,coord_df_path, seq_df_path, num_lndks, selected_lndks_idx, num_test_videos,
-                                       n_kernels, threshold_neutral):
-        self.coord_df_path = coord_df_path # Path of csv file contained coordinates of the landmaks
-        self.seq_df_path = seq_df_path # Path of csv file contained sequences informations
-        self.num_lndks = num_lndks # Number of landmarks for each frame of the videos in the dataset
-        self.selected_lndks_idx = selected_lndks_idx # Indexes of the landmarks to considered to the clustering
-        self.num_test_videos = num_test_videos # Number of videos of the dataset to considered to the clustering
-        self.n_kernels = n_kernels # Number of kernels of the gmm to trained
-        self.threshold_neutral = threshold_neutral # Thresholds to use for calculate the relevant configurations
-        #self.threshold_relevant=threshold_relevant
+    def __init__(self,coord_df_path, seq_df_path, num_lndks, selected_lndks_idx, num_test_videos,n_kernels):
+        self.coord_df_path = coord_df_path  # Path of csv file contained coordinates of the landmarks
+        self.seq_df_path = seq_df_path  # Path of csv file contained sequences informations
+        self.num_lndks = num_lndks  # Number of landmarks for each frame of the videos in the dataset
+        self.selected_lndks_idx = selected_lndks_idx  # Indexes of the landmarks to considered to the clustering
+        self.num_test_videos = num_test_videos  # Number of videos of the dataset to considered to the clustering
+        self.n_kernels = n_kernels  # Number of kernels of the gmm to trained
         self.gmm = None
         self.fisher_vectors = None
+        self.histograms_of_videos = None
         self.index_relevant_configurations = None
         self.index_neutral_configurations = None
 
@@ -116,26 +114,26 @@ class PreliminaryClustering:
     """ Apply a strategy to derive the relevant and neutral configurations for classify the VAS index using histograms.
     Return two lists containing respectively the indices of the relevant and neautral configurations to classify 
     the vas index """
-    def __generate_relevant_and_neutral_configurations(self, histograms_of_videos):
+    def __generate_relevant_and_neutral_configurations(self, threshold_neutral):
         print("---- Process relevant and neutral configurations... ----")
         seq_df = pd.read_csv(self.seq_df_path)
         index_neutral_configurations  = []
         for seq_num in np.arange(self.num_test_videos):
             vas = seq_df.iloc[seq_num][1]
-            hist = histograms_of_videos[seq_num]
+            hist = self.histograms_of_videos[seq_num]
             if vas == 0:
                 for j in np.arange(self.n_kernels):
-                    if hist[j] > self.threshold_neutral and j not in index_neutral_configurations:
+                    if hist[j] > threshold_neutral and j not in index_neutral_configurations:
                         index_neutral_configurations.append(j)
         index_relevant_configurations = [x for x in np.arange(self.n_kernels) if x not in index_neutral_configurations]
         return index_relevant_configurations , index_neutral_configurations
 
     """ Plot and save histograms by distinguishing the color of the representations of the relevant configurations
     from the neutral ones """
-    def __plot_and_save_histograms(self, histograms_of_videos, histo_figures_path):
-        for i in range(0, len(histograms_of_videos)):
+    def __plot_and_save_histograms(self, histo_figures_path):
+        for i in range(0, len(self.histograms_of_videos)):
             print("Plot and save histogram #"+str(i)+"...")
-            histo = histograms_of_videos[i]
+            histo = self.histograms_of_videos[i]
             plt.bar(self.index_neutral_configurations, histo[np.array(self.index_neutral_configurations)], color="blue")
             plt.bar(self.index_relevant_configurations, histo[np.array(self.index_relevant_configurations)], color="red")
             plt.title("VIDEO #"+str(i))
@@ -144,17 +142,20 @@ class PreliminaryClustering:
 
     """ Execute preliminary clustering using the parameters passed to class constructor.
     If plot_and_save_histo is setted on True value the figures of histograms of videos is saved in files """
-    def execute_preliminary_clustering(self, preliminary_clustering_dump_path=None, histo_figures_path=None,
+    def execute_preliminary_clustering(self, threshold_neutral=0.015, preliminary_clustering_dump_path=None, histo_figures_path=None,
                                        plot_and_save_histo=False):
         velocities = self.__get_velocities_frames() #Velocities of landmarks for each frame of the videos content in the dataset
-        data_video_to_fit=self.__get_videos_frames_features(velocities) #Velocities of landmarks collected in the same 4D array
-        self.gmm = self.__generate_gmm(data_video_to_fit) #Gaussian mixture that performs the clustering of the configurations
-        self.fisher_vectors = self.__calculate_FV(velocities) #Fisher vectors for each frame of the videos contained in the dataset
-        histograms_of_videos = self.__generate_histograms() #Histograms of the configurations detected for each frame of the videos contained in the dataset
+        if self.gmm == None:
+            data_video_to_fit = self.__get_videos_frames_features(velocities)  # Velocities of landmarks collected in the same 4D array
+            self.gmm = self.__generate_gmm(data_video_to_fit) # Gaussian mixture that performs the clustering of the configurations
+        if self.fisher_vectors == None:
+            self.fisher_vectors = self.__calculate_FV(velocities) # Fisher vectors for each frame of the videos contained in the dataset
+        if self.histograms_of_videos == None:
+            self.histograms_of_videos = self.__generate_histograms() # Histograms of the configurations detected for each frame of the videos contained in the dataset
         self.index_relevant_configurations, self.index_neutral_configurations = \
-            self.__generate_relevant_and_neutral_configurations(histograms_of_videos) #Relevant and neutral configurations for the classification of the vas index
+            self.__generate_relevant_and_neutral_configurations(threshold_neutral) # Relevant and neutral configurations for the classification of the vas index
         if plot_and_save_histo:
-            self.__plot_and_save_histograms(histograms_of_videos, histo_figures_path)
+            self.__plot_and_save_histograms(histo_figures_path)
         if preliminary_clustering_dump_path is not None:
             with open(preliminary_clustering_dump_path, 'wb') as handle:
                 pickle.dump(self, handle, protocol=pickle.HIGHEST_PROTOCOL)
