@@ -69,8 +69,7 @@ class PreliminaryClustering:
     Return the fitted GMM """
     def __generate_gmm(self, videos_features):
         print("---- Generate GMM with " + str(self.n_kernels) + " kernels... ----")
-        fv_gmm = FisherVectorGMM(n_kernels=self.n_kernels)
-        return fv_gmm.fit(videos_features)
+        return FisherVectorGMM(n_kernels=self.n_kernels).fit(videos_features)
 
     """ Calculate the fisher vectors of the first num test videos of the dataset.
     Return the calculated fisher vectors """

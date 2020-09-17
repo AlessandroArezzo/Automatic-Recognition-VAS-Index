@@ -24,8 +24,7 @@ def get_args():
     parser.add_argument('-threshold_neutral', "--threshold_neutral",
                         help="Threshold for neutral configuration in preliminary clustering",
                         default=0.03, type=float)
-    parser.add_argument('-'
-                        '', "--save_histo_figures",
+    parser.add_argument('-save_histo_figures', "--save_histo_figures",
                         help="Determines if histograms are to be saved during preliminary clustering phases",
                         default=False, type=bool)
     parser.add_argument('-type_classifier', "--type_classifier",
@@ -61,8 +60,8 @@ preliminary_clustering_path = "data/classifier/" + sub_directory + "/preliminary
 # Model classifier info and paths
 type_classifier = args.type_classifier
 train_by_max_score=args.train_by_max_score
-regularization_parameter = args.regularization_parameter
-gamma_parameter = args.gamma_parameter
+regularization_parameter = args.regularization_parameter  # For train_by_max_score = False
+gamma_parameter = args.gamma_parameter  # For train_by_max_score = False
 classifier_path = "data/classifier/" + sub_directory + "/" + type_classifier + "_classifier.pickle"
 path_scores_parameters = "data/classifier/" + sub_directory + "/scores.csv"
 
