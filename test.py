@@ -43,6 +43,8 @@ percent_training_set = 0.85
 # Features info
 selected_lndks_idx = np.arange(66)
 num_test_videos = 200
+train_video_idx = np.arange(0,num_test_videos)[:int(percent_training_set * num_test_videos)]
+test_video_idx = np.arange(0,num_test_videos)[int(percent_training_set * num_test_videos):num_test_videos]
 # Preliminary clustering info and paths
 threshold_neutral = args.threshold_neutral # For type_test = 0
 n_kernels_preliminary_clustering = args.n_kernels_preliminary_clustering  # For type_test = 1
@@ -76,13 +78,14 @@ def generate_and_test_model(n_kernels_preliminary_clustering, threshold_neutral_
         preliminary_clustering = PreliminaryClustering(coord_df_path=coord_df_path,
                                                        seq_df_path=seq_df_path, num_lndks=num_lndks,
                                                        selected_lndks_idx=selected_lndks_idx,
-                                                       num_test_videos=num_test_videos,
+                                                       train_video_idx=train_video_idx,
                                                        n_kernels=n_kernels_preliminary_clustering)
     preliminary_clustering.execute_preliminary_clustering(threshold_neutral=threshold_neutral_configurations)
     model_classifier = ModelClassifier(type_classifier=type_classifier, seq_df_path=seq_df_path,
-                                 num_test_videos=num_test_videos, preliminary_clustering=preliminary_clustering)
-    model_classifier.train_model(percent_training_set=percent_training_set, train_by_max_score=True)
-    score = model_classifier.calculate_rate_model(percent_data_set= 1 - percent_training_set)
+                                 train_video_idx=train_video_idx, test_video_idx=test_video_idx,
+                                preliminary_clustering=preliminary_clustering)
+    model_classifier.train_model(train_by_max_score=True)
+    score = model_classifier.calculate_rate_model()
     return score, model_classifier.classifier.C, model_classifier.classifier.gamma
 
 """Compare the best scores obtained by varying the thresholds used for the neutral configurations in the 
@@ -96,7 +99,7 @@ def compare_performance_different_thresholds():
     preliminary_clustering = PreliminaryClustering(coord_df_path=coord_df_path,
                                                    seq_df_path=seq_df_path, num_lndks=num_lndks,
                                                    selected_lndks_idx=selected_lndks_idx,
-                                                   num_test_videos=num_test_videos,
+                                                   train_video_idx=train_video_idx,
                                                    n_kernels=n_kernels_preliminary_clustering)
     preliminary_clustering.execute_preliminary_clustering(threshold_neutral=0.015)
     out_df_scores = pd.DataFrame(columns=['thresholds_neutral', 'regularization_parameter', 'gamma_parameter', 'max_score'])
