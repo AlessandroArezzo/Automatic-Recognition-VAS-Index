@@ -1,7 +1,7 @@
 import pickle
 import numpy as np
 import pandas as pd
-from FisherVectors import FisherVectorGMM
+from fishervector import FisherVectorGMM
 import matplotlib.pyplot as plt
 import matplotlib
 matplotlib.use('Agg')
@@ -82,18 +82,6 @@ class PreliminaryClustering:
             fisher_vectors.append(fv)
         return fisher_vectors
 
-    """Determine the fisher vector cluster and update the histogram.
-    Return the updated histogram"""
-    def __clustering(self, fv, histogram):
-        sum_max = cluster_max=0
-        for cluster in np.arange(self.n_kernels):
-            sum_cluster = sum(fv[cluster])+sum(fv[cluster+self.n_kernels])
-            if sum_cluster > sum_max:
-                sum_max = sum_cluster
-                cluster_max = cluster
-        histogram[cluster_max] += 1
-        return histogram
-
     """ Calculate the histograms of the videos starting from the fisher vectors of the frames.
     Uses the clustering method to establish the cluster of a sequence by his fisher vector. 
     Return a list with histograms of videos """
@@ -104,8 +92,11 @@ class PreliminaryClustering:
         for index in range(0, n_videos):
             current_video_fv = self.fisher_vectors[index][0]
             video_histogram = np.zeros(self.n_kernels)
-            for i in range(0, current_video_fv.shape[0]):
-                video_histogram=self.__clustering(current_video_fv[i],video_histogram)
+            for index_frame in range(0, current_video_fv.shape[0]):
+                frame = current_video_fv[index_frame]
+                for index_configuration in range(0, self.n_kernels):
+                    video_histogram[index_configuration] += sum(frame[index_configuration]) + \
+                                                            sum(frame[index_configuration + self.n_kernels])
             video_histogram = video_histogram / sum(video_histogram)
             histograms_of_videos.append(video_histogram)
         return histograms_of_videos
