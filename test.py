@@ -82,7 +82,7 @@ def generate_and_test_model(n_kernels_preliminary_clustering, threshold_neutral_
     model_classifier = ModelClassifier(type_classifier=type_classifier, seq_df_path=seq_df_path,
                                  num_test_videos=num_test_videos, preliminary_clustering=preliminary_clustering)
     model_classifier.train_model(percent_training_set=percent_training_set, train_by_max_score=True)
-    score = model_classifier.calculate_rate_model(percent_data_set=1 - percent_training_set)
+    score = model_classifier.calculate_rate_model(percent_data_set= 1 - percent_training_set)
     return score, model_classifier.classifier.C, model_classifier.classifier.gamma
 
 """Compare the best scores obtained by varying the thresholds used for the neutral configurations in the 

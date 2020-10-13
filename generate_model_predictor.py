@@ -29,7 +29,7 @@ def get_args():
                         default=False, type=bool)
     parser.add_argument('-type_classifier', "--type_classifier",
                         help="Determines type of classifier to use: 'SVM' or 'SVR",
-                        default='SVM')
+                        default='SVR')
     parser.add_argument('-regularization_parameter', "--regularization_parameter",
                         help="Regularization_parameter",
                         default=1, type=int)
