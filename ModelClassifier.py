@@ -7,11 +7,12 @@ from sklearn import svm
 to characterize the VAS index obtained during the preliminary clustering phase. """
 class ModelClassifier:
 
-    def __init__(self, seq_df_path, num_test_videos, preliminary_clustering, type_classifier='SVM'):
+    def __init__(self, seq_df_path, train_video_idx, test_video_idx, preliminary_clustering, type_classifier='SVM'):
         assert type_classifier == 'SVM' or type_classifier == 'SVR'
         self.type_classifier = type_classifier  # Classifier to use: "SVM" or "SVR"
         self.seq_df_path = seq_df_path  # Path of csv file contained sequences informations
-        self.num_test_videos = num_test_videos  # Number of videos of the dataset to considered to the clustering
+        self.train_video_idx = train_video_idx  # Indexes of the videos to use for training
+        self.test_video_idx = test_video_idx  # Indexes of the videos to use for test
         self.preliminary_clustering = preliminary_clustering  # Preliminary clustering performed
         self.classifier = None
         self.vas_sequences = None
@@ -40,22 +41,20 @@ class ModelClassifier:
 
     """Read vas index of all sequences from dataset. 
     Return a list contained the vas index of all sequences """
-    def __read_vas_videos_sequences(self):
+    def __read_vas_videos(self):
         print("---- Read vas indexes for sequences in dataset... ----")
         seq_df = pd.read_csv(self.seq_df_path)
         vas_sequences = []
-        for num_video in np.arange(self.num_test_videos):
+        for num_video in np.arange(len(self.histo_relevant_config_videos)):
             vas_sequences.append(seq_df.iloc[num_video][1])
         self.vas_sequences = vas_sequences
 
     """Train classifier using fisher vectors calculated and vas indexes readed of the sequences.
     The type of classifier (SVM or SVR) is passed to constructor of class.
     Return the trained classifier """
-    def __train_classifier(self, percent_training_set, regularization_parameter, gamma_parameter):
-        training_set_histo = self.histo_relevant_config_videos[:int(percent_training_set
-                                                                    * len(self.histo_relevant_config_videos))]
-        training_set_vas = self.vas_sequences[:int(percent_training_set * len(self.vas_sequences))]
-        training_set_histo = np.asarray(training_set_histo)
+    def __train_classifier(self, regularization_parameter, gamma_parameter):
+        training_set_histo = np.asarray([self.histo_relevant_config_videos[i] for i in self.train_video_idx])
+        training_set_vas = np.asarray([self.vas_sequences[i] for i in self.train_video_idx])
         if self.type_classifier == "SVM":
             classifier = svm.SVC(C=regularization_parameter, gamma=gamma_parameter)
         else:
@@ -63,7 +62,7 @@ class ModelClassifier:
         classifier.fit(training_set_histo, training_set_vas)
         return classifier
 
-    def __train_classifier_maximizing_score(self, percent_training_set):
+    def __train_classifier_maximizing_score(self):
         print("Find parameters "+self.type_classifier+" that maximizes the total score... ")
         regularization_test_parameters = np.arange(10, 1010, 10)
         gamma_test_parameters = np.arange(0.1, 1.1, 0.1)
@@ -71,8 +70,8 @@ class ModelClassifier:
         max_classifier = None
         for regularization in regularization_test_parameters:
             for gamma in gamma_test_parameters:
-                self.classifier = self.__train_classifier(percent_training_set, regularization, gamma)
-                current_rate = self.calculate_rate_model(percent_data_set=1 - percent_training_set)
+                self.classifier = self.__train_classifier(regularization, gamma)
+                current_rate = self.calculate_rate_model()
                 if current_rate > max_rate:
                     max_classifier = self.classifier
                     max_rate = current_rate
@@ -80,27 +79,25 @@ class ModelClassifier:
 
     def __init_data_sequences(self):
         self.__generate_histo_relevant_configuration()
-        self.__read_vas_videos_sequences()
+        self.__read_vas_videos()
 
     """Performs the classifier training procedure based on what was done in the preliminary clustering phase"""
-    def train_model(self, percent_training_set=0.85, regularization_parameter=1,
+    def train_model(self, regularization_parameter=1,
                     gamma_parameter='scale', train_by_max_score=True, classifier_dump_path=None):
         if self.histo_relevant_config_videos == None or self.vas_sequences == None:
             self.__init_data_sequences()
         if train_by_max_score == True:
-            self.classifier = self.__train_classifier_maximizing_score(percent_training_set=percent_training_set)
+            self.classifier = self.__train_classifier_maximizing_score()
         else:
-            self.classifier = self.__train_classifier(percent_training_set, regularization_parameter, gamma_parameter)
+            self.classifier = self.__train_classifier(regularization_parameter, gamma_parameter)
         if classifier_dump_path is not None:
             with open(classifier_dump_path, 'wb') as handle:
                 pickle.dump(self, handle, protocol=pickle.HIGHEST_PROTOCOL)
 
-    def calculate_rate_model(self, percent_data_set, path_scores_parameters=None):
-        test_set_histo = self.histo_relevant_config_videos[int((1-percent_data_set)
-                                                               * len(self.histo_relevant_config_videos)):len(
-                                                                    self.histo_relevant_config_videos)]
-        test_set_vas = self.vas_sequences[int((1-percent_data_set) * len(self.vas_sequences)):len(self.vas_sequences)]
-        test_set_histo = np.asarray(test_set_histo)
+
+    def calculate_rate_model(self, path_scores_parameters=None):
+        test_set_histo = np.asarray([self.histo_relevant_config_videos[i] for i in self.test_video_idx])
+        test_set_vas = np.asarray([self.vas_sequences[i] for i in self.test_video_idx])
         error = 0
         if path_scores_parameters is not None:
             out_df_scores = pd.DataFrame(columns=['video_num', 'real_vas', 'vas_predicted', 'error'])

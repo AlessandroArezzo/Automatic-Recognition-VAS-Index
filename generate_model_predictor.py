@@ -48,6 +48,8 @@ percent_training_set = 0.85
 # Features info
 selected_lndks_idx = np.arange(66)
 num_test_videos = 200
+train_video_idx = np.arange(0,num_test_videos)[:int(percent_training_set * num_test_videos)]
+test_video_idx = np.arange(0,num_test_videos)[int(percent_training_set * num_test_videos):num_test_videos]
 # Preliminary clustering info and paths
 n_kernels_preliminary_clustering = args.n_kernels_preliminary_clustering
 threshold_neutral = args.threshold_neutral
@@ -76,21 +78,21 @@ if __name__ == '__main__':
         preliminary_clustering = PreliminaryClustering(coord_df_path=coord_df_path,
                                                        seq_df_path=seq_df_path, num_lndks=num_lndks,
                                                        selected_lndks_idx=selected_lndks_idx,
-                                                       num_test_videos=num_test_videos,
+                                                       train_video_idx=train_video_idx,
                                                        n_kernels=n_kernels_preliminary_clustering)
         preliminary_clustering_dump_path = preliminary_clustering_path if dump_preliminary_clustering == True else None
         preliminary_clustering.execute_preliminary_clustering( plot_and_save_histo=save_histo_figures,
            histo_figures_path= histo_figures_path, preliminary_clustering_dump_path=preliminary_clustering_dump_path,
            threshold_neutral=threshold_neutral)
     classifier = ModelClassifier(type_classifier=type_classifier, seq_df_path=seq_df_path,
-                                 num_test_videos=num_test_videos,
+                                 train_video_idx=train_video_idx,
+                                 test_video_idx=test_video_idx,
                                  preliminary_clustering=preliminary_clustering)
     print("Train and save " + type_classifier + " model...")
-    classifier.train_model(percent_training_set=percent_training_set, regularization_parameter=regularization_parameter,
+    classifier.train_model(regularization_parameter=regularization_parameter,
                            gamma_parameter=gamma_parameter, train_by_max_score=train_by_max_score,
                            classifier_dump_path=classifier_path)
     print(args.type_classifier + " trained and saved in model_classifier_path")
     print("Calculate scores for trained classifier...")
-    rate = classifier.calculate_rate_model(percent_data_set=1 - percent_training_set,
-                                           path_scores_parameters=path_scores_parameters)
+    rate = classifier.calculate_rate_model(path_scores_parameters=path_scores_parameters)
     print("Rate classifier is " + str(rate))

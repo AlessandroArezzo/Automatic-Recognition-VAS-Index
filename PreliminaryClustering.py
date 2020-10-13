@@ -8,12 +8,12 @@ matplotlib.use('Agg')
 
 """Class that is responsible for obtaining the relevant configurations for the classification of the VAS index. """
 class PreliminaryClustering:
-    def __init__(self,coord_df_path, seq_df_path, num_lndks, selected_lndks_idx, num_test_videos,n_kernels):
+    def __init__(self,coord_df_path, seq_df_path, num_lndks, selected_lndks_idx, train_video_idx, n_kernels):
         self.coord_df_path = coord_df_path  # Path of csv file contained coordinates of the landmarks
         self.seq_df_path = seq_df_path  # Path of csv file contained sequences informations
         self.num_lndks = num_lndks  # Number of landmarks for each frame of the videos in the dataset
         self.selected_lndks_idx = selected_lndks_idx  # Indexes of the landmarks to considered to the clustering
-        self.num_test_videos = num_test_videos  # Number of videos of the dataset to considered to the clustering
+        self.train_video_idx = train_video_idx  # Indexes of the videos to use for training
         self.n_kernels = n_kernels  # Number of kernels of the gmm to trained
         self.gmm = None
         self.fisher_vectors = None
@@ -57,7 +57,8 @@ class PreliminaryClustering:
         n_features_for_frame = velocities[0].shape[2]
         data_videos_to_fit = np.ndarray(shape=(1, total_num_frames, 1, n_features_for_frame))
         index_frame = 0
-        for video in velocities:
+        for video_idx in self.train_video_idx:
+            video = velocities[video_idx]
             for index_video_frame in np.arange(video.shape[0]):
                 current_frame_features = video[index_video_frame][0]
                 for index_feature in np.arange(n_features_for_frame):
@@ -77,7 +78,7 @@ class PreliminaryClustering:
         print("---- Calculate fisher vectors of video sequences in dataset... ----")
         fisher_vectors = []
         n_features_for_frame = velocities[0].shape[2]
-        for i in range(0, self.num_test_videos):
+        for i in range(0, len(velocities)):
             fv = self.gmm.predict(np.array(velocities[i]).reshape(1, velocities[i].shape[0], 1, n_features_for_frame))
             fisher_vectors.append(fv)
         return fisher_vectors
@@ -108,7 +109,7 @@ class PreliminaryClustering:
         print("---- Process relevant and neutral configurations... ----")
         seq_df = pd.read_csv(self.seq_df_path)
         index_neutral_configurations  = []
-        for seq_num in np.arange(self.num_test_videos):
+        for seq_num in self.train_video_idx:
             vas = seq_df.iloc[seq_num][1]
             hist = self.histograms_of_videos[seq_num]
             if vas == 0:
