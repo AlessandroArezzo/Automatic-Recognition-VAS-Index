@@ -65,6 +65,10 @@ if __name__ == '__main__':
         preliminary_clustering.execute_preliminary_clustering(plot_and_save_histo=save_histo_figures,
            histo_figures_path=histo_figures_path, preliminary_clustering_dump_path=preliminary_clustering_dump_path,
            threshold_neutral=threshold_neutral)
+    if len(preliminary_clustering.index_relevant_configurations) == 0:
+        print("No relevant configurations were found using "+str(n_kernels_GMM)+" kernels and "+threshold_neutral+" for the threshold of neutral configurations "
+              "(try to lower the threshold by analyzing the histograms produced by clustering in the test module)")
+        exit(1)
     classifier = ModelClassifier(type_classifier=type_classifier, seq_df_path=seq_df_path,
                                  train_video_idx=train_video_idx,
                                  test_video_idx=test_video_idx,

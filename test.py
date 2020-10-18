@@ -78,10 +78,13 @@ def compare_performance_different_thresholds():
         threshold = thresholds_neutral_to_test[threshold_idx]
         print("Execute experiments using threshold=" + str(threshold) + "...")
         preliminary_clustering.execute_preliminary_clustering(threshold_neutral=threshold)
-        score, regularization_parameter, gamma_parameter = generate_and_test_model(
-            n_kernels_GMM=n_kernels_GMM,
-            threshold_neutral_configurations=threshold, preliminary_clustering=preliminary_clustering,
-            execute_preliminary_clustering=False)
+        if len(preliminary_clustering.index_relevant_configurations) == 0:
+            score = regularization_parameter = generate_and_test_model = "None"
+        else:
+            score, regularization_parameter, gamma_parameter = generate_and_test_model(
+                n_kernels_GMM=n_kernels_GMM,
+                threshold_neutral_configurations=threshold, preliminary_clustering=preliminary_clustering,
+                execute_preliminary_clustering=False)
         data = np.hstack((np.array([threshold, regularization_parameter, gamma_parameter, score]).reshape(1, -1)))
         out_df_scores = out_df_scores.append(pd.Series(data.reshape(-1), index=out_df_scores.columns),ignore_index=True)
         out_df_scores.to_csv(scores_result_thresholds_path, index=False, header=True)

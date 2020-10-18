@@ -21,4 +21,4 @@ type_classifier = 'SVR'  # Indicates the type of the classifier ('SVR' or 'SVM')
 
 n_kernels_to_test = np.arange(50, 800, 50)  #  Numbers of kernels to test (only for type_test=0)
 
-thresholds_neutral_to_test = np.arange(0.015, 0.05, 0.005)  #  Thresholds to test (only for type_test=1)
+thresholds_neutral_to_test = np.arange(0.015, 0.06, 0.005)  #  Thresholds to test (only for type_test=1)

@@ -2,7 +2,7 @@ import numpy as np
 """Configuration file for the generate_model_predictor.py script that allows you to generate
 a certain model predictor from its parameters"""
 
-n_kernels_GMM = 200   # Number of clusters of the GMM
+n_kernels_GMM = 100   # Number of clusters of the GMM
 
 threshold_neutral = 0.3  # Defines the threshold of the neutral configurations
 """ If the threshold is 0.3, all those configurations that occur within the sequences with vas equal to 0 
