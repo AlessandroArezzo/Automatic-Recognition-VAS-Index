@@ -15,6 +15,7 @@ class PreliminaryClustering:
         self.selected_lndks_idx = selected_lndks_idx  # Indexes of the landmarks to considered to the clustering
         self.train_video_idx = train_video_idx  # Indexes of the videos to use for training
         self.n_kernels = n_kernels  # Number of kernels of the gmm to trained
+        self.velocities = None
         self.gmm = None
         self.fisher_vectors = None
         self.histograms_of_videos = None
@@ -51,14 +52,14 @@ class PreliminaryClustering:
     All velocities of the sequences frame are inserted in a 4D array that contains all frames informations.
     Features of the frames of all videos are collected in the same sequence.
     Return a 4D array with velocities of the landmarks for each frame in the dataset """
-    def __get_videos_frames_features(self, velocities):
+    def __get_videos_frames_features(self):
         print("---- Get features vector of the frame in dataset by velocities... ----")
-        total_num_frames = sum([video.shape[0] for video in velocities])
-        n_features_for_frame = velocities[0].shape[2]
+        total_num_frames = sum([video.shape[0] for video in self.velocities])
+        n_features_for_frame = self.velocities[0].shape[2]
         data_videos_to_fit = np.ndarray(shape=(1, total_num_frames, 1, n_features_for_frame))
         index_frame = 0
         for video_idx in self.train_video_idx:
-            video = velocities[video_idx]
+            video = self.velocities[video_idx]
             for index_video_frame in np.arange(video.shape[0]):
                 current_frame_features = video[index_video_frame][0]
                 for index_feature in np.arange(n_features_for_frame):
@@ -70,16 +71,16 @@ class PreliminaryClustering:
     Return the fitted GMM """
     def __generate_gmm(self, videos_features):
         print("---- Generate GMM with " + str(self.n_kernels) + " kernels... ----")
-        return FisherVectorGMM(n_kernels=self.n_kernels).fit(videos_features)
+        return FisherVectorGMM(n_kernels=self.n_kernels).fit(videos_features, verbose=False)
 
     """ Calculate the fisher vectors of the first num test videos of the dataset.
     Return the calculated fisher vectors """
-    def __calculate_FV(self, velocities):
+    def __calculate_FV(self):
         print("---- Calculate fisher vectors of video sequences in dataset... ----")
         fisher_vectors = []
-        n_features_for_frame = velocities[0].shape[2]
-        for i in range(0, len(velocities)):
-            fv = self.gmm.predict(np.array(velocities[i]).reshape(1, velocities[i].shape[0], 1, n_features_for_frame))
+        n_features_for_frame = self.velocities[0].shape[2]
+        for i in range(0, len(self.velocities)):
+            fv = self.gmm.predict(np.array(self.velocities[i]).reshape(1, self.velocities[i].shape[0], 1, n_features_for_frame))
             fisher_vectors.append(fv)
         return fisher_vectors
 
@@ -106,9 +107,9 @@ class PreliminaryClustering:
     Return two lists containing respectively the indices of the relevant and neautral configurations to classify 
     the vas index """
     def __generate_relevant_and_neutral_configurations(self, threshold_neutral):
-        print("---- Process relevant and neutral configurations... ----")
+        print("---- Extracts relevant and neutral configurations analyzing train sequences ... ----")
         seq_df = pd.read_csv(self.seq_df_path)
-        index_neutral_configurations  = []
+        index_neutral_configurations = []
         for seq_num in self.train_video_idx:
             vas = seq_df.iloc[seq_num][1]
             hist = self.histograms_of_videos[seq_num]
@@ -135,12 +136,13 @@ class PreliminaryClustering:
     If plot_and_save_histo is setted on True value the figures of histograms of videos is saved in files """
     def execute_preliminary_clustering(self, threshold_neutral=0.015, preliminary_clustering_dump_path=None, histo_figures_path=None,
                                        plot_and_save_histo=False):
-        velocities = self.__get_velocities_frames() #Velocities of landmarks for each frame of the videos content in the dataset
+        if self.velocities == None:
+            self.velocities = self.__get_velocities_frames() #Velocities of landmarks for each frame of the videos content in the dataset
         if self.gmm == None:
-            data_video_to_fit = self.__get_videos_frames_features(velocities)  # Velocities of landmarks collected in the same 4D array
+            data_video_to_fit = self.__get_videos_frames_features()  # Velocities of landmarks collected in the same 4D array
             self.gmm = self.__generate_gmm(data_video_to_fit) # Gaussian mixture that performs the clustering of the configurations
         if self.fisher_vectors == None:
-            self.fisher_vectors = self.__calculate_FV(velocities) # Fisher vectors for each frame of the videos contained in the dataset
+            self.fisher_vectors = self.__calculate_FV() # Fisher vectors for each frame of the videos contained in the dataset
         if self.histograms_of_videos == None:
             self.histograms_of_videos = self.__generate_histograms() # Histograms of the configurations detected for each frame of the videos contained in the dataset
         self.index_relevant_configurations, self.index_neutral_configurations = \

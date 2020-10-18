@@ -34,7 +34,9 @@ class ModelClassifier:
             for config in index_relevant_configuration:
                 mean_gmm = self.means_gmm[config]
                 histo_relevant_config[self.dict_relevant_config[str(mean_gmm)]] = histo[config]
-            histo_relevant_config = histo_relevant_config / sum(histo_relevant_config)
+            sum_histo_values = sum(histo_relevant_config)
+            if sum_histo_values > 0:
+                histo_relevant_config = histo_relevant_config / sum_histo_values
             histo_relevant_config_videos.append(histo_relevant_config)
         self.histo_relevant_config_videos = histo_relevant_config_videos
 

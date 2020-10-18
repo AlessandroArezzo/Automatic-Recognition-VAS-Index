@@ -1,85 +1,57 @@
 from PreliminaryClustering import PreliminaryClustering
 from ModelClassifier import ModelClassifier
-import argparse
+import config_tests
 import numpy as np
 import os
 import pandas as pd
 
-"""Script that deals with performing two types of testing. 
- The first typology (type_test = 0) allows to compare the maximum scores obtained by varying the number of kernels (clusters)
- used to cluster the dataset in the preliminary clustering. Using fixed thresholds neutral configurations.
- The other typology (type_test = 1) allows to compare the maximum scores obtained by varying the threshold 
- that differentiates the relevant configurations for the classification of the vas index from the neutral ones during 
- the preliminary clustering. Using fixed number of clusters.
- The resulting score are saved in csv files. """
+def check_existing_paths(dir_paths=[],file_paths=[]):
+    for dir_path in dir_paths:
+        if not os.path.isdir(dir_path):
+            print("Configuration error: dir path '"+dir_path+"' not exist in project")
+            exit(1)
+    for file_path in file_paths:
+        if not os.path.isfile(file_path):
+            print("Configuration error: file '" + file_path + "' not exist in project")
+            exit(1)
 
-
-def get_args():
-    parser = argparse.ArgumentParser()
-    parser.add_argument('-type_test', "--type_test",
-                        help="Determines type of tests: 0 for compare performance with differents n_kernels "
-                             "in the preliminary clustering"
-                             "and 1 for compare performance with differents thresholds neutral configuration "
-                             "in the preliminary clustering",
-                        default=0, type=int)
-    parser.add_argument('-n_kernels_preliminary_clustering', "--n_kernels_preliminary_clustering",
-                        help="Number of kernels to use for GMM of the preliminary clustering", default=100, type=int)
-    parser.add_argument('-threshold_neutral', "--threshold_neutral",
-                        help="Threshold for neutral configuration in preliminary clustering",
-                        default=0.03, type=float)
-    parser.add_argument('-type_classifier', "--type_classifier",
-                        help="Determines type of classifier to use: 'SVM' or 'SVR",
-                        default='SVM')
-    return parser.parse_args()
-
-
-args = get_args()
-type_test = args.type_test
+type_test = config_tests.type_test
 # Dataset info
 coord_df_path = "data/dataset/2d_skeletal_data_unbc_coords.csv"
-seq_df_path = "data/dataset/2d_skeletal_data_unbc_coords.csv"
+seq_df_path = "data/dataset/2d_skeletal_data_unbc_sequence.csv"
 num_lndks = 66
 percent_training_set = 0.85
 # Features info
-selected_lndks_idx = np.arange(66)
+selected_lndks_idx = config_tests.selected_lndks_idx
 num_test_videos = 200
 train_video_idx = np.arange(0,num_test_videos)[:int(percent_training_set * num_test_videos)]
 test_video_idx = np.arange(0,num_test_videos)[int(percent_training_set * num_test_videos):num_test_videos]
 # Preliminary clustering info and paths
-threshold_neutral = args.threshold_neutral # For type_test = 0
-n_kernels_preliminary_clustering = args.n_kernels_preliminary_clustering  # For type_test = 1
+threshold_neutral = config_tests.threshold_neutral
+n_kernels_GMM = config_tests.n_kernels_GMM
+n_kernels_to_test = config_tests.n_kernels_to_test
+thresholds_neutral_to_test = config_tests.thresholds_neutral_to_test
 # Model classifier info and paths
-type_classifier = args.type_classifier
-scores_result_thresholds_path ="data/test/" + str(n_kernels_preliminary_clustering)+"_kernels" \
+type_classifier = config_tests.type_classifier
+scores_result_thresholds_path ="data/test/" + str(n_kernels_GMM)+"_kernels" \
                                + "/test_thresholds_"+type_classifier+"/scores_thresholds.csv"
 scores_result_kernels_path = "data/test/test_n_kernels/score_results_"+type_classifier+"/scores_n_kernels.csv"
-
-"""Check if all files and all directory passed as parameters existing"""
-
-
-def check_existing_dump_paths(files_paths=[]):
-    assert all(os.path.isfile(file_path) for file_path in files_paths)
-
 
 """The procedure is performed which involves performing preliminary clustering and subsequent generation 
 of the classifier (SVM or SVR) given the number of kernels of the GMM and the threshold for the neutral configurations
 to use in the preliminary clustering"""
 
 
-def generate_and_test_model(n_kernels_preliminary_clustering, threshold_neutral_configurations,
+def generate_and_test_model(n_kernels_GMM, threshold_neutral_configurations,
                             preliminary_clustering=None):
-    assert n_kernels_preliminary_clustering > 0 and (type_classifier == 'SVM' or type_classifier == 'SVR') \
+    assert n_kernels_GMM > 0 and (type_classifier == 'SVM' or type_classifier == 'SVR') \
            and 0 < threshold_neutral_configurations < 1
-    print("Experiments for #kernels=" + str(n_kernels_preliminary_clustering)+ " and threshold neutral configurations="
-          +str(threshold_neutral_configurations))
-    print("-- Preliminary clustering for #kernels=" + str(n_kernels_preliminary_clustering)+ " and threshold neutral configurations="
-          +str(threshold_neutral_configurations))
     if preliminary_clustering == None:
         preliminary_clustering = PreliminaryClustering(coord_df_path=coord_df_path,
                                                        seq_df_path=seq_df_path, num_lndks=num_lndks,
                                                        selected_lndks_idx=selected_lndks_idx,
                                                        train_video_idx=train_video_idx,
-                                                       n_kernels=n_kernels_preliminary_clustering)
+                                                       n_kernels=n_kernels_GMM)
     preliminary_clustering.execute_preliminary_clustering(threshold_neutral=threshold_neutral_configurations)
     model_classifier = ModelClassifier(type_classifier=type_classifier, seq_df_path=seq_df_path,
                                  train_video_idx=train_video_idx, test_video_idx=test_video_idx,
@@ -94,19 +66,18 @@ The respective value of the parameter input to the script is used as the kernel 
 Save the results in a csv file containing the comparison of the best scores found for each threshold """
 
 def compare_performance_different_thresholds():
-    thresholds_neutral_to_test = np.arange(0.015, 0.05, 0.005)
-    print("Prepare preliminary clustering...")
     preliminary_clustering = PreliminaryClustering(coord_df_path=coord_df_path,
                                                    seq_df_path=seq_df_path, num_lndks=num_lndks,
                                                    selected_lndks_idx=selected_lndks_idx,
                                                    train_video_idx=train_video_idx,
-                                                   n_kernels=n_kernels_preliminary_clustering)
-    preliminary_clustering.execute_preliminary_clustering(threshold_neutral=0.015)
+                                                   n_kernels=n_kernels_GMM)
     out_df_scores = pd.DataFrame(columns=['thresholds_neutral', 'regularization_parameter', 'gamma_parameter', 'max_score'])
     max_score = optimal_thresholds = optimal_regularization_parameter = optimal_gamma_parameter = 0
     for threshold in thresholds_neutral_to_test:
+        print("Execute experiments using threshold=" + str(threshold) + "...")
+        preliminary_clustering.execute_preliminary_clustering(threshold_neutral=threshold)
         score, regularization_parameter, gamma_parameter = generate_and_test_model(
-            n_kernels_preliminary_clustering=n_kernels_preliminary_clustering,
+            n_kernels_GMM=n_kernels_GMM,
             threshold_neutral_configurations=threshold, preliminary_clustering=preliminary_clustering)
         data = np.hstack((np.array([threshold, regularization_parameter, gamma_parameter, score]).reshape(1, -1)))
         out_df_scores = out_df_scores.append(pd.Series(data.reshape(-1), index=out_df_scores.columns),ignore_index=True)
@@ -126,12 +97,12 @@ Save the results in a csv file containing the comparison of the best scores foun
 
 
 def compare_performance_different_number_clusters():
-    n_kernels_to_test = np.arange(50, 800, 50)
     out_df_scores = pd.DataFrame(columns=['n_kernels', 'optimal_regularization', 'optimal_gamma', 'max_score'])
     max_score = optimal_n_kernels = optimal_regularization_parameter = optimal_gamma_parameter = 0
     for n_kernels in n_kernels_to_test:
+        print("Execute experiments using " + str(n_kernels) + " kenrnels...")
         score, regularization_parameter, gamma_parameter = generate_and_test_model(
-            n_kernels_preliminary_clustering=n_kernels, threshold_neutral_configurations=threshold_neutral)
+            n_kernels_GMM=n_kernels, threshold_neutral_configurations=threshold_neutral)
         data = np.hstack((np.array([n_kernels, regularization_parameter, gamma_parameter, score]).reshape(1, -1)))
         out_df_scores = out_df_scores.append(pd.Series(data.reshape(-1), index=out_df_scores.columns),ignore_index=True)
         out_df_scores.to_csv(scores_result_kernels_path, index=False, header=True)
@@ -144,18 +115,24 @@ def compare_performance_different_number_clusters():
 
 
 if __name__ == '__main__':
-    type_tests = args.type_test
-    assert type_tests == 0 or type_tests == 1
-    check_existing_dump_paths(files_paths=[coord_df_path, seq_df_path])
-    if type_tests == 0:
+    assert type_test == 0 or type_test == 1
+    if type_test == 0:
+        dir_paths = ["data/test/test_n_kernels/score_results_"+type_classifier+"/"]
+    else:
+        dir_paths = ["data/test/" + str(n_kernels_GMM)+"_kernels" + "/test_thresholds_"+type_classifier+"/"]
+    file_paths = [coord_df_path, seq_df_path]
+    check_existing_paths(dir_paths=dir_paths, file_paths=file_paths)
+    if type_test == 0:
+        print("Execute tests with different number of kernels GMM (using "+threshold_neutral+" for threshold neutral configurations)")
         optimal_n_kernels, optimal_regularization_parameter, optimal_gamma_parameter = \
             compare_performance_different_number_clusters()
         print("End tests - Max rate with #kernels: " + str(optimal_n_kernels) +
               " and classifier with C= " + str(optimal_regularization_parameter) + " and gamma= "
               + str(optimal_gamma_parameter))
-    elif type_tests == 1:
+    elif type_test == 1:
+        print("Execute tests with different thresholds for the neutral configurations (using "+str(n_kernels_GMM)+" kernels)")
         max_rate, optimal_regularization_parameter, optimal_gamma_parameter = compare_performance_different_thresholds()
-        print("End test with n_kernels= " + str(args.n_kernels_preliminary_clustering) + " -- Max rate= " + str(
+        print("End test with n_kernels= " + str(n_kernels_GMM) + " -- Max rate= " + str(
             max_rate) + " - Optimal_C= " + str(optimal_regularization_parameter) + " and Optimal_gamma= " + str(
             optimal_gamma_parameter))
     else:
