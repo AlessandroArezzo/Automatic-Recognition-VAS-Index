@@ -1,7 +1,7 @@
 import numpy as np
 from PreliminaryClustering import PreliminaryClustering
 from ModelClassifier import ModelClassifier
-import config_generate_model
+from configuration import config_generate_model
 import os
 """Script that allows you to train a classifier (SVM or SVR) using a given number of kernels for preliminary 
 clustering, gamma and regularization parameters of the model to be fitted. The model is saved in a pickle file."""
@@ -22,7 +22,7 @@ seq_df_path = "data/dataset/2d_skeletal_data_unbc_sequence.csv"
 num_lndks = 66
 percent_training_set = 0.85
 # Features info
-selected_lndks_idx =config_generate_model.selected_lndks_idx
+selected_lndks_idx = config_generate_model.selected_lndks_idx
 num_test_videos = 200
 train_video_idx = np.arange(0,num_test_videos)[:int(percent_training_set * num_test_videos)]
 test_video_idx = np.arange(0,num_test_videos)[int(percent_training_set * num_test_videos):num_test_videos]

@@ -1,6 +1,6 @@
 from PreliminaryClustering import PreliminaryClustering
 from ModelClassifier import ModelClassifier
-import config_tests
+from configuration import config_tests
 import numpy as np
 import os
 import pandas as pd
