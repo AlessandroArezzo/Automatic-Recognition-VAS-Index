@@ -34,7 +34,9 @@ class ModelClassifier:
             for config in index_relevant_configuration:
                 mean_gmm = self.means_gmm[config]
                 histo_relevant_config[self.dict_relevant_config[str(mean_gmm)]] = histo[config]
-            histo_relevant_config = histo_relevant_config / sum(histo_relevant_config)
+            sum_histo_values = sum(histo_relevant_config)
+            if sum_histo_values > 0:
+                histo_relevant_config = histo_relevant_config / sum_histo_values
             histo_relevant_config_videos.append(histo_relevant_config)
         self.histo_relevant_config_videos = histo_relevant_config_videos
 
@@ -63,7 +65,7 @@ class ModelClassifier:
         return classifier
 
     def __train_classifier_maximizing_score(self):
-        print("Find parameters "+self.type_classifier+" that maximizes the total score... ")
+        print("---- Find parameters "+self.type_classifier+" that maximizes the total score on the test sequences... ----")
         regularization_test_parameters = np.arange(10, 1010, 10)
         gamma_test_parameters = np.arange(0.1, 1.1, 0.1)
         max_rate = 0
