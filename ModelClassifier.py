@@ -65,7 +65,7 @@ class ModelClassifier:
         return classifier
 
     def __train_classifier_maximizing_score(self):
-        print("Find parameters "+self.type_classifier+" that maximizes the total score... ")
+        print("---- Find parameters "+self.type_classifier+" that maximizes the total score on the test sequences... ----")
         regularization_test_parameters = np.arange(10, 1010, 10)
         gamma_test_parameters = np.arange(0.1, 1.1, 0.1)
         max_rate = 0

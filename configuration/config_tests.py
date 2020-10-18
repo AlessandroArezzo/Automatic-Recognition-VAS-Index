@@ -13,7 +13,7 @@ threshold_neutral = 0.3  # # Defines the threshold of the neutral configurations
 """ If the threshold is 0.3, all those configurations that occur within the sequences with vas equal to 0 
  with a frequency greater than 0.3 will be considered neutral """
 
-n_kernels_GMM = 100   # Number of clusters of the GMM ( to use only for type_test=1)
+n_kernels_GMM = 50   # Number of clusters of the GMM ( to use only for type_test=1)
 
 selected_lndks_idx = np.arange(66)  # Indexes of the landmarks to use for fitting GMM and description sequences
 

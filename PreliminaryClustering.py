@@ -107,7 +107,7 @@ class PreliminaryClustering:
     Return two lists containing respectively the indices of the relevant and neautral configurations to classify 
     the vas index """
     def __generate_relevant_and_neutral_configurations(self, threshold_neutral):
-        print("---- Extracts relevant and neutral configurations analyzing train sequences ... ----")
+        print("---- Extracts relevant and neutral configurations analyzing train sequences (with threshold="+str(threshold_neutral)+") ... ----")
         seq_df = pd.read_csv(self.seq_df_path)
         index_neutral_configurations = []
         for seq_num in self.train_video_idx:

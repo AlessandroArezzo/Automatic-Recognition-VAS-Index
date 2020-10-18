@@ -55,7 +55,7 @@ if __name__ == '__main__':
         print("Read preliminary clustering from file...")
         preliminary_clustering = PreliminaryClustering.load_from_pickle(pickle_path=preliminary_clustering_path)
     else:
-        print("Execute preliminary clustering with #kernels=" + str(n_kernels_GMM) + "...")
+        print("Execute preliminary clustering using " + str(n_kernels_GMM) + " kernels GMM...")
         preliminary_clustering = PreliminaryClustering(coord_df_path=coord_df_path,
                                                        seq_df_path=seq_df_path, num_lndks=num_lndks,
                                                        selected_lndks_idx=selected_lndks_idx,
@@ -73,7 +73,7 @@ if __name__ == '__main__':
     classifier.train_model(regularization_parameter=regularization_parameter,
                            gamma_parameter=gamma_parameter, train_by_max_score=train_by_max_score,
                            classifier_dump_path=classifier_path)
-    print(type_classifier + " trained and saved in model_classifier_path")
+    print(type_classifier + " trained and saved in path '" +classifier_path+"'")
     print("Calculate scores for trained classifier...")
     rate = classifier.calculate_rate_model(path_scores_parameters=path_scores_parameters)
     print("Rate classifier is " + str(rate))

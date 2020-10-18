@@ -43,7 +43,7 @@ to use in the preliminary clustering"""
 
 
 def generate_and_test_model(n_kernels_GMM, threshold_neutral_configurations,
-                            preliminary_clustering=None):
+                            preliminary_clustering=None, execute_preliminary_clustering=True):
     assert n_kernels_GMM > 0 and (type_classifier == 'SVM' or type_classifier == 'SVR') \
            and 0 < threshold_neutral_configurations < 1
     if preliminary_clustering == None:
@@ -52,7 +52,8 @@ def generate_and_test_model(n_kernels_GMM, threshold_neutral_configurations,
                                                        selected_lndks_idx=selected_lndks_idx,
                                                        train_video_idx=train_video_idx,
                                                        n_kernels=n_kernels_GMM)
-    preliminary_clustering.execute_preliminary_clustering(threshold_neutral=threshold_neutral_configurations)
+    if execute_preliminary_clustering:
+        preliminary_clustering.execute_preliminary_clustering(threshold_neutral=threshold_neutral_configurations)
     model_classifier = ModelClassifier(type_classifier=type_classifier, seq_df_path=seq_df_path,
                                  train_video_idx=train_video_idx, test_video_idx=test_video_idx,
                                 preliminary_clustering=preliminary_clustering)
@@ -73,12 +74,14 @@ def compare_performance_different_thresholds():
                                                    n_kernels=n_kernels_GMM)
     out_df_scores = pd.DataFrame(columns=['thresholds_neutral', 'regularization_parameter', 'gamma_parameter', 'max_score'])
     max_score = optimal_thresholds = optimal_regularization_parameter = optimal_gamma_parameter = 0
-    for threshold in thresholds_neutral_to_test:
+    for threshold_idx in np.arange(0,len(thresholds_neutral_to_test)):
+        threshold = thresholds_neutral_to_test[threshold_idx]
         print("Execute experiments using threshold=" + str(threshold) + "...")
         preliminary_clustering.execute_preliminary_clustering(threshold_neutral=threshold)
         score, regularization_parameter, gamma_parameter = generate_and_test_model(
             n_kernels_GMM=n_kernels_GMM,
-            threshold_neutral_configurations=threshold, preliminary_clustering=preliminary_clustering)
+            threshold_neutral_configurations=threshold, preliminary_clustering=preliminary_clustering,
+            execute_preliminary_clustering=False)
         data = np.hstack((np.array([threshold, regularization_parameter, gamma_parameter, score]).reshape(1, -1)))
         out_df_scores = out_df_scores.append(pd.Series(data.reshape(-1), index=out_df_scores.columns),ignore_index=True)
         out_df_scores.to_csv(scores_result_thresholds_path, index=False, header=True)
@@ -100,7 +103,7 @@ def compare_performance_different_number_clusters():
     out_df_scores = pd.DataFrame(columns=['n_kernels', 'optimal_regularization', 'optimal_gamma', 'max_score'])
     max_score = optimal_n_kernels = optimal_regularization_parameter = optimal_gamma_parameter = 0
     for n_kernels in n_kernels_to_test:
-        print("Execute experiments using " + str(n_kernels) + " kenrnels...")
+        print("Execute experiments using " + str(n_kernels) + " kernels GMM...")
         score, regularization_parameter, gamma_parameter = generate_and_test_model(
             n_kernels_GMM=n_kernels, threshold_neutral_configurations=threshold_neutral)
         data = np.hstack((np.array([n_kernels, regularization_parameter, gamma_parameter, score]).reshape(1, -1)))
@@ -123,17 +126,17 @@ if __name__ == '__main__':
     file_paths = [coord_df_path, seq_df_path]
     check_existing_paths(dir_paths=dir_paths, file_paths=file_paths)
     if type_test == 0:
-        print("Execute tests with different number of kernels GMM (using "+threshold_neutral+" for threshold neutral configurations)")
+        print("Execute tests with different number of kernels GMM (using "+str(threshold_neutral)+" for threshold neutral configurations)")
         optimal_n_kernels, optimal_regularization_parameter, optimal_gamma_parameter = \
             compare_performance_different_number_clusters()
-        print("End tests - Max rate with #kernels: " + str(optimal_n_kernels) +
+        print("End tests - Max score with #kernels: " + str(optimal_n_kernels) +
               " and classifier with C= " + str(optimal_regularization_parameter) + " and gamma= "
               + str(optimal_gamma_parameter))
     elif type_test == 1:
         print("Execute tests with different thresholds for the neutral configurations (using "+str(n_kernels_GMM)+" kernels)")
-        max_rate, optimal_regularization_parameter, optimal_gamma_parameter = compare_performance_different_thresholds()
-        print("End test with n_kernels= " + str(n_kernels_GMM) + " -- Max rate= " + str(
-            max_rate) + " - Optimal_C= " + str(optimal_regularization_parameter) + " and Optimal_gamma= " + str(
+        max_threshold, optimal_regularization_parameter, optimal_gamma_parameter = compare_performance_different_thresholds()
+        print("End test with n_kernels= " + str(n_kernels_GMM) + ": best threshold= " + str(
+            max_threshold) + " with Optimal_C= " + str(optimal_regularization_parameter) + " and Optimal_gamma= " + str(
             optimal_gamma_parameter))
     else:
         exit(1)
