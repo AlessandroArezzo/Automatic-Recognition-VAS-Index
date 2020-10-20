@@ -7,7 +7,8 @@ from sklearn import svm
 to characterize the VAS index obtained during the preliminary clustering phase. """
 class ModelClassifier:
 
-    def __init__(self, seq_df_path, train_video_idx, test_video_idx, preliminary_clustering, type_classifier='SVM'):
+    def __init__(self, seq_df_path, train_video_idx, test_video_idx, preliminary_clustering, type_classifier='SVM',
+                 verbose=True):
         assert type_classifier == 'SVM' or type_classifier == 'SVR'
         self.type_classifier = type_classifier  # Classifier to use: "SVM" or "SVR"
         self.seq_df_path = seq_df_path  # Path of csv file contained sequences informations
@@ -19,6 +20,7 @@ class ModelClassifier:
         self.histo_relevant_config_videos = None
         self.means_gmm = self.preliminary_clustering.gmm.means
         self.dict_relevant_config = {}
+        self.verbose = verbose
         index = 0
         for config in self.preliminary_clustering.index_relevant_configurations:
             mean_gmm = self.means_gmm[config]
@@ -44,7 +46,8 @@ class ModelClassifier:
     """Read vas index of all sequences from dataset. 
     Return a list contained the vas index of all sequences """
     def __read_vas_videos(self):
-        print("---- Read vas indexes for sequences in dataset... ----")
+        if self.verbose:
+            print("---- Read vas indexes for sequences in dataset... ----")
         seq_df = pd.read_csv(self.seq_df_path)
         vas_sequences = []
         for num_video in np.arange(len(self.histo_relevant_config_videos)):
@@ -65,7 +68,8 @@ class ModelClassifier:
         return classifier
 
     def __train_classifier_maximizing_score(self):
-        print("---- Find parameters "+self.type_classifier+" that maximizes the total score on the test sequences... ----")
+        if self.verbose:
+            print("---- Find parameters "+self.type_classifier+" that maximizes the total score on the test sequences... ----")
         regularization_test_parameters = np.arange(10, 1010, 10)
         gamma_test_parameters = np.arange(0.1, 1.1, 0.1)
         max_rate = 0
@@ -100,21 +104,27 @@ class ModelClassifier:
     def calculate_rate_model(self, path_scores_parameters=None):
         test_set_histo = np.asarray([self.histo_relevant_config_videos[i] for i in self.test_video_idx])
         test_set_vas = np.asarray([self.vas_sequences[i] for i in self.test_video_idx])
-        error = 0
+        sum_error = 0
+        num_test_videos = test_set_histo.shape[0]
         if path_scores_parameters is not None:
-            out_df_scores = pd.DataFrame(columns=['video_num', 'real_vas', 'vas_predicted', 'error'])
-        for num_video in np.arange(test_set_histo.shape[0]):
+            out_df_scores = pd.DataFrame(columns=['sequence_num', 'real_vas', 'vas_predicted', 'error'])
+        for num_video in np.arange(num_test_videos):
             real_vas = test_set_vas[num_video]
             vas_predicted = self.classifier.predict(test_set_histo[num_video].reshape(1,-1))[0]
-            error += abs(real_vas-vas_predicted)
+            vas_predicted = round(vas_predicted, 3)
+            error = abs(real_vas-vas_predicted)
+            sum_error += error
+            error = round(error, 3)
             if path_scores_parameters is not None:
                 data = np.hstack(
-                    (np.array([num_video, real_vas, vas_predicted, abs(real_vas - vas_predicted)]).reshape(1, -1)))
+                    (np.array([self.test_video_idx[num_video], real_vas, vas_predicted, error]).reshape(1, -1)))
                 out_df_scores = out_df_scores.append(pd.Series(data.reshape(-1), index=out_df_scores.columns),
                                                      ignore_index=True)
         if path_scores_parameters is not None:
             out_df_scores.to_csv(path_scores_parameters, index=False, header=True)
-        return 1/error if error > 0 else 1
+        sum_error /= num_test_videos
+        sum_error = round(sum_error, 3)
+        return sum_error
 
     @staticmethod
     def load_model_from_pickle(pickle_path):
