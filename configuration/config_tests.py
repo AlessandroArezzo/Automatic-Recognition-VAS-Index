@@ -4,13 +4,18 @@ import numpy as np
  the preliminary clustering. Using fixed number of clusters.
  The resulting score are saved in csv files."""
 
-n_kernels_GMM = 50   # Number of clusters of the GMM ( to use only for type_test=1)
+# Number of clusters of the GMM
+n_kernels_GMM = 50
 
-selected_lndks_idx = [5, 11, 19, 24, 37, 41, 56, 58] # Indexes of the landmarks to use for fitting GMM and description sequences
+# Indexes of the landmarks to use for fitting GMM and description sequences
+selected_lndks_idx = [5, 11, 19, 24, 37, 41, 56, 58]
 
-type_classifier = 'SVR'  # Indicates the type of the classifier ('SVR' or 'SVM')
+# Type of the classifier ('SVR' or 'SVM')
+type_classifier = 'SVR'
 
-thresholds_neutral_to_test = np.arange(0.015, 0.06, 0.005)  #  Thresholds to test (only for type_test=1)
+# Thresholds to test
+thresholds_neutral_to_test = np.arange(0.015, 0.06, 0.005)
 
-cross_val_protocol = "5-fold-cross-validation"  # Define type of protocol to be used to evaluate the performance of the models
+# Type of protocol to be used to evaluate the performance of the models
+cross_val_protocol = "5-fold-cross-validation"
 """cross_val_protocol:  'Leave-One-Sequence-Out' or '5-fold-cross-validation' """

@@ -77,7 +77,7 @@ class ModelClassifier:
         for regularization in regularization_test_parameters:
             for gamma in gamma_test_parameters:
                 self.classifier = self.__train_classifier(regularization, gamma)
-                current_rate = self.calculate_rate_model()
+                current_rate = self.calculate_rate_model()[0]
                 if current_rate > max_rate:
                     max_classifier = self.classifier
                     max_rate = current_rate
@@ -105,6 +105,7 @@ class ModelClassifier:
         test_set_histo = np.asarray([self.histo_relevant_config_videos[i] for i in self.test_video_idx])
         test_set_vas = np.asarray([self.vas_sequences[i] for i in self.test_video_idx])
         sum_error = 0
+        count_corrected_predict = 0
         num_test_videos = test_set_histo.shape[0]
         if path_scores_parameters is not None:
             out_df_scores = pd.DataFrame(columns=['sequence_num', 'real_vas', 'vas_predicted', 'error'])
@@ -115,6 +116,8 @@ class ModelClassifier:
             error = abs(real_vas-vas_predicted)
             sum_error += error
             error = round(error, 3)
+            if error < 0.5:
+                count_corrected_predict +=1
             if path_scores_parameters is not None:
                 data = np.hstack(
                     (np.array([self.test_video_idx[num_video], real_vas, vas_predicted, error]).reshape(1, -1)))
@@ -124,7 +127,8 @@ class ModelClassifier:
             out_df_scores.to_csv(path_scores_parameters, index=False, header=True)
         sum_error /= num_test_videos
         sum_error = round(sum_error, 3)
-        return sum_error
+        accuracy = round((count_corrected_predict / num_test_videos)*100, 2)
+        return sum_error, accuracy
 
     @staticmethod
     def load_model_from_pickle(pickle_path):

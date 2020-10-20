@@ -42,10 +42,12 @@ if __name__ == '__main__':
     if save_histo_figures:
         dir_paths.append(path_histo_figures)
     file_paths = [coord_df_path, seq_df_path]
-    out_df_scores = pd.DataFrame(columns=['Num_test', 'Absolute Error'])
+    out_df_scores = pd.DataFrame(columns=['Num_test', 'Mean Absolute Error', 'Accuracy(%)'])
     check_existing_paths(dir_paths=dir_paths, file_paths=file_paths)
-    n_test = len(train_video_idx)
+    #n_test = len(train_video_idx)
+    n_test = 5
     errors = []
+    accuracy = []
     print("Generate and test models with "+str(n_kernels_GMM)+" kernels GMM, threshold = "+str(threshold_neutral)+ " and using "+cross_val_protocol )
     for test_idx in np.arange(0, n_test):
         print("- Test "+str(test_idx+1)+"/"+str(n_test)+" -")
@@ -73,25 +75,38 @@ if __name__ == '__main__':
                                    gamma_parameter=gamma_parameter, train_by_max_score=train_by_max_score)
             print("-- Calculate scores for trained model... --")
             current_test_path_error = path_errors+"test_"+str(test_idx)+"_"+type_classifier+".csv"
-            current_error = classifier.calculate_rate_model(path_scores_parameters=current_test_path_error)
+            current_error, current_accuracy = classifier.calculate_rate_model(path_scores_parameters=current_test_path_error)
             errors.append(current_error)
-            print("-- Absolute Error: " + str(current_error)+" --")
-        data = np.hstack((np.array([test_idx+1, current_error]).reshape(1, -1)))
+            accuracy.append(current_accuracy)
+            print("-- Absolute Error: " + str(current_error)+" / Accuracy: " + str(current_accuracy)+"% --")
+        data = np.hstack((np.array([test_idx+1, current_error, current_accuracy]).reshape(1, -1)))
         out_df_scores = out_df_scores.append(pd.Series(data.reshape(-1), index=out_df_scores.columns),
                                              ignore_index=True)
-    path_results_csv = path_results + "errors_"+type_classifier+".csv"
-    path_results_histo = path_results + "graphics_errors"+type_classifier+".png"
+    path_results_csv = path_results + "results_"+type_classifier+".csv"
+    path_errors_histo = path_results + "graphics_errors_"+type_classifier+".png"
+    path_accuracy_histo = path_results + "graphics_accuracy_" + type_classifier + ".png"
     out_df_scores.to_csv(path_results_csv, index=False, header=True)
     print("Results saved in a csv file on path '" + path_results_csv)
     mean_error = sum(errors)/n_test
     mean_error = round(mean_error, 3)
     plt.bar(np.arange(1, n_test+1), errors, color="blue")
     plt.axhline(y=mean_error, xmin=0, xmax=n_test+1, color="red", label='Mean Absolute Error: '+str(mean_error))
-    plt.ylabel("Absolute Error")
+    plt.ylabel("Mean Absolute Error")
     plt.xlabel("Num test")
-    plt.title("Graphics Absolute Errors")
+    plt.title("Graphics Mean Absolute Errors")
     plt.legend()
-    plt.savefig(path_results_histo)
+    plt.savefig(path_errors_histo)
     plt.close()
-    print("Histogram of the results generated saved in a png file on path '" + path_results_histo)
-    print("Mean Absolute Error of the model is: " + str(mean_error))
+    mean_accuracy = sum(accuracy) / n_test
+    mean_accuracy = round(mean_accuracy, 3)
+    plt.bar(np.arange(1, n_test + 1), accuracy, color="blue")
+    plt.axhline(y=mean_accuracy, xmin=0, xmax=n_test + 1, color="red", label='Accuracy: ' + str(mean_accuracy))
+    plt.ylabel("Accuracy")
+    plt.xlabel("Num test")
+    plt.title("Graphics Accuracy Model")
+    plt.legend()
+    plt.savefig(path_accuracy_histo)
+    plt.close()
+    print("Histogram of the results generated saved in a png file on path '" + path_results)
+    print("Mean Absolute Error: " + str(mean_error))
+    print("Accuracy: " + str(mean_accuracy)+"%")
