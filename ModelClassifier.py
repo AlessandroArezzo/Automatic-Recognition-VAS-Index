@@ -81,7 +81,7 @@ class ModelClassifier:
                 if current_error < min_error:
                     best_classifier = self.classifier
                     min_error = current_error
-        return best_classifier
+        self.classifier = best_classifier
 
     def __init_data_sequences(self):
         self.__generate_histo_relevant_configuration()
