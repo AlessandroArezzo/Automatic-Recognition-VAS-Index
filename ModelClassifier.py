@@ -72,16 +72,16 @@ class ModelClassifier:
             print("---- Find parameters "+self.type_classifier+" that maximizes the total score on the test sequences... ----")
         regularization_test_parameters = np.arange(10, 1010, 10)
         gamma_test_parameters = np.arange(0.1, 1.1, 0.1)
-        max_rate = 0
-        max_classifier = None
+        min_error = np.inf
+        best_classifier = None
         for regularization in regularization_test_parameters:
             for gamma in gamma_test_parameters:
                 self.classifier = self.__train_classifier(regularization, gamma)
-                current_rate = self.calculate_rate_model()[0]
-                if current_rate > max_rate:
-                    max_classifier = self.classifier
-                    max_rate = current_rate
-        return max_classifier
+                current_error = self.calculate_rate_model()[0]
+                if current_error < min_error:
+                    best_classifier = self.classifier
+                    min_error = current_error
+        return best_classifier
 
     def __init_data_sequences(self):
         self.__generate_histo_relevant_configuration()
@@ -117,7 +117,7 @@ class ModelClassifier:
             sum_error += error
             error = round(error, 3)
             if error < 0.5:
-                count_corrected_predict +=1
+                count_corrected_predict += 1
             if path_scores_parameters is not None:
                 data = np.hstack(
                     (np.array([self.test_video_idx[num_video], real_vas, vas_predicted, error]).reshape(1, -1)))

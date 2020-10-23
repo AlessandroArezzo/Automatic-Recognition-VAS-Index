@@ -44,8 +44,7 @@ if __name__ == '__main__':
     file_paths = [coord_df_path, seq_df_path]
     out_df_scores = pd.DataFrame(columns=['Num_test', 'Mean Absolute Error', 'Accuracy(%)'])
     check_existing_paths(dir_paths=dir_paths, file_paths=file_paths)
-    #n_test = len(train_video_idx)
-    n_test = 5
+    n_test = len(train_video_idx)
     errors = []
     accuracy = []
     print("Generate and test models with "+str(n_kernels_GMM)+" kernels GMM, threshold = "+str(threshold_neutral)+ " and using "+cross_val_protocol )
@@ -63,8 +62,9 @@ if __name__ == '__main__':
         preliminary_clustering.execute_preliminary_clustering(plot_and_save_histo=save_histo_figures,
            histo_figures_path=path_histo_current, threshold_neutral=threshold_neutral)
         if len(preliminary_clustering.index_relevant_configurations) == 0:
-            print("-- No relevant configurations were found using "+str(n_kernels_GMM)+" kernels and "+threshold_neutral+" for the threshold of neutral configurations "
+            print("-- No relevant configurations were found using "+str(n_kernels_GMM)+" kernels and "+str(threshold_neutral)+" for the threshold of neutral configurations "
                   "(try to lower the threshold by analyzing the histograms produced by clustering in the test module )--")
+            current_error = current_accuracy = "None"
         else:
             classifier = ModelClassifier(type_classifier=type_classifier, seq_df_path=seq_df_path,
                                          train_video_idx=train_videos,

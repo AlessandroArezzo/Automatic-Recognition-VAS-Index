@@ -3,10 +3,10 @@ import numpy as np
 a certain model predictor from its parameters"""
 
 # Number of clusters of the GMM
-n_kernels_GMM = 50
+n_kernels_GMM = 25
 
 # Threshold of the neutral configurations
-threshold_neutral = 0.3
+threshold_neutral = 0.01
 """ If the threshold is 0.3, all those configurations that occur within the sequences with vas equal to 0 
  with a frequency greater than 0.3 will be considered neutral """
 

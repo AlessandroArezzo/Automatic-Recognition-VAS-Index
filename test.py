@@ -45,7 +45,7 @@ Save the results in a csv file containing the comparison of the best scores foun
 
 def compare_performance_different_thresholds():
     out_df_scores = pd.DataFrame(columns=['Thresholds Neutral Configurations', 'Mean Absolute Error', 'Accuracy'])
-    min_error = 100000
+    min_error = np.inf
     optimal_thresholds = 0
     n_test_for_threshold = len(train_video_idx)
     mean_errors = []
@@ -53,7 +53,7 @@ def compare_performance_different_thresholds():
     for threshold_idx in np.arange(0,len(thresholds_neutral_to_test)):
         threshold = thresholds_neutral_to_test[threshold_idx]
         threshold = round(threshold, 3)
-        threshold_sum_error = 0
+        errors = []
         threshold_sum_accuracy = 0
         print("Execute experiments using threshold=" + str(threshold) + "...")
         for test_idx in np.arange(0, n_test_for_threshold):
@@ -66,26 +66,27 @@ def compare_performance_different_thresholds():
                                                            train_video_idx=train_videos,
                                                            n_kernels=n_kernels_GMM, verbose=False)
             preliminary_clustering.execute_preliminary_clustering(threshold_neutral=threshold)
-            if len(preliminary_clustering.index_relevant_configurations) == 0:
-                current_error = current_accuracy = "None"
-            else:
+            if len(preliminary_clustering.index_relevant_configurations) > 0:
                 current_error, current_accuracy = generate_and_test_model(
                     threshold_neutral_configurations=threshold, preliminary_clustering=preliminary_clustering,
                     train_videos=train_videos, test_videos=test_videos)
-            threshold_sum_error += current_error
-            threshold_sum_accuracy += current_accuracy
-        threshold_sum_error /= n_test_for_threshold
-        threshold_sum_error = round(threshold_sum_error, 3)
-        mean_errors.append(threshold_sum_error)
-        threshold_sum_accuracy /= n_test_for_threshold
-        threshold_sum_accuracy = round(threshold_sum_accuracy, 2)
-        mean_accuracy.append(threshold_sum_accuracy)
+                errors.append(current_error)
+                threshold_sum_accuracy += current_accuracy
+        if len(errors) == 0:
+            threshold_sum_error = threshold_sum_accuracy = "None"
+        else:
+            threshold_sum_error = sum(errors) / len(errors)
+            threshold_sum_error = round(threshold_sum_error, 3)
+            mean_errors.append(threshold_sum_error)
+            threshold_sum_accuracy /= n_test_for_threshold
+            threshold_sum_accuracy = round(threshold_sum_accuracy, 2)
+            mean_accuracy.append(threshold_sum_accuracy)
+            if threshold_sum_error < min_error:
+                min_error = threshold_sum_error
+                optimal_thresholds = threshold
         data = np.hstack((np.array([threshold, threshold_sum_error, threshold_sum_accuracy]).reshape(1, -1)))
         out_df_scores = out_df_scores.append(pd.Series(data.reshape(-1), index=out_df_scores.columns),ignore_index=True)
         out_df_scores.to_csv(path_result_thresholds, index=False, header=True)
-        if threshold_sum_error < min_error:
-            min_error = threshold_sum_error
-            optimal_thresholds = threshold
     path_errors_graph = path_result + "errors_graph_"+type_classifier+".png"
     path_accuracy_graph = path_result + "accuracy_graph_" + type_classifier + ".png"
     plt.plot(thresholds_neutral_to_test, mean_errors, color="blue")

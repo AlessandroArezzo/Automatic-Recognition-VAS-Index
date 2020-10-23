@@ -5,7 +5,7 @@ import numpy as np
  The resulting score are saved in csv files."""
 
 # Number of clusters of the GMM
-n_kernels_GMM = 50
+n_kernels_GMM = 25
 
 # Indexes of the landmarks to use for fitting GMM and description sequences
 selected_lndks_idx = [5, 11, 19, 24, 37, 41, 56, 58]
@@ -14,7 +14,7 @@ selected_lndks_idx = [5, 11, 19, 24, 37, 41, 56, 58]
 type_classifier = 'SVR'
 
 # Thresholds to test
-thresholds_neutral_to_test = np.arange(0.015, 0.06, 0.005)
+thresholds_neutral_to_test = np.arange(0.01, 0.1, 0.005)
 
 # Type of protocol to be used to evaluate the performance of the models
 cross_val_protocol = "5-fold-cross-validation"
