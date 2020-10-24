@@ -46,8 +46,7 @@ def compare_performance_different_thresholds():
     out_df_scores = pd.DataFrame(columns=['Thresholds Neutral Configurations', 'Mean Absolute Error', 'Accuracy'])
     min_error = np.inf
     optimal_thresholds = 0
-    #n_test_for_threshold = len(train_video_idx)
-    n_test_for_threshold = 2
+    n_test_for_threshold = len(train_video_idx)
     mean_errors = []
     mean_accuracy = []
     for threshold_idx in np.arange(0,len(thresholds_neutral_to_test)):
