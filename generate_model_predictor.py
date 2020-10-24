@@ -3,7 +3,7 @@ import pandas as pd
 import matplotlib.pyplot as plt
 
 from PreliminaryClustering import PreliminaryClustering
-from ModelClassifier import ModelClassifier
+from ModelSVR import ModelSVR
 from configuration import config_generate_model
 from utils import get_training_and_test_idx, check_existing_paths
 """Script that allows you to train a classifier (SVM or SVR) using a given number of kernels for preliminary 
@@ -28,7 +28,6 @@ sub_directory = str(n_kernels_GMM) + "_kernels"
 path_histo_figures = "data/classifier/" + sub_directory + "/histo_figures/"
 preliminary_clustering_path = "data/classifier/" + sub_directory + "/preliminary_clustering.pickle"
 # Model classifier info and paths
-type_classifier = config_generate_model.type_classifier
 train_by_max_score = config_generate_model.train_by_max_score
 regularization_parameter = config_generate_model.regularization_parameter
 gamma_parameter = config_generate_model.gamma_parameter
@@ -36,8 +35,7 @@ path_results = "data/classifier/" + sub_directory + "/"
 path_errors = path_results + "/errors_tests/"
 
 if __name__ == '__main__':
-    assert n_kernels_GMM > 0 and (type_classifier == 'SVM' or type_classifier == 'SVR') \
-           and 0 < threshold_neutral < 1
+    assert n_kernels_GMM > 0 and 0 < threshold_neutral < 1
     dir_paths = [path_errors]
     if save_histo_figures:
         dir_paths.append(path_histo_figures)
@@ -66,25 +64,25 @@ if __name__ == '__main__':
                   "(try to lower the threshold by analyzing the histograms produced by clustering in the test module )--")
             current_error = current_accuracy = "None"
         else:
-            classifier = ModelClassifier(type_classifier=type_classifier, seq_df_path=seq_df_path,
-                                         train_video_idx=train_videos,
-                                         test_video_idx=test_videos,
-                                         preliminary_clustering=preliminary_clustering)
-            print("-- Train and save " + type_classifier + " model... --")
-            classifier.train_model(regularization_parameter=regularization_parameter,
-                                   gamma_parameter=gamma_parameter, train_by_max_score=train_by_max_score)
-            print("-- Calculate scores for trained model... --")
-            current_test_path_error = path_errors+"test_"+str(test_idx)+"_"+type_classifier+".csv"
-            current_error, current_accuracy = classifier.calculate_rate_model(path_scores_parameters=current_test_path_error)
+            model_svr = ModelSVR(seq_df_path=seq_df_path,
+                                 train_video_idx=train_videos,
+                                 test_video_idx=test_videos,
+                                 preliminary_clustering=preliminary_clustering)
+            print("-- Train and save SVR model... --")
+            model_svr.train_SVR(regularization_parameter=regularization_parameter,
+                                gamma_parameter=gamma_parameter, train_by_max_score=train_by_max_score)
+            print("-- Calculate scores for trained SVR... --")
+            current_test_path_error = path_errors+"test_"+str(test_idx)+".csv"
+            current_error, current_accuracy = model_svr.calculate_rate_model(path_scores_parameters=current_test_path_error)
             errors.append(current_error)
             accuracy.append(current_accuracy)
             print("-- Absolute Error: " + str(current_error)+" / Accuracy: " + str(current_accuracy)+"% --")
         data = np.hstack((np.array([test_idx+1, current_error, current_accuracy]).reshape(1, -1)))
         out_df_scores = out_df_scores.append(pd.Series(data.reshape(-1), index=out_df_scores.columns),
                                              ignore_index=True)
-    path_results_csv = path_results + "results_"+type_classifier+".csv"
-    path_errors_histo = path_results + "graphics_errors_"+type_classifier+".png"
-    path_accuracy_histo = path_results + "graphics_accuracy_" + type_classifier + ".png"
+    path_results_csv = path_results + "results.csv"
+    path_errors_histo = path_results + "graphics_errors.png"
+    path_accuracy_histo = path_results + "graphics_accuracy.png"
     out_df_scores.to_csv(path_results_csv, index=False, header=True)
     print("Results saved in a csv file on path '" + path_results_csv)
     mean_error = sum(errors)/n_test

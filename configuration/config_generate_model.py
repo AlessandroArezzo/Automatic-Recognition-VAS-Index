@@ -22,9 +22,6 @@ regularization_parameter = 1
 # Only to be used if train_by_max_score = False
 gamma_parameter = 'scale'
 
-# Indicates the type of the classifier ('SVR' or 'SVM')
-type_classifier = 'SVR'
-
 # Defines if the histograms of the dataset sequences must be saved in their respective files
 save_histo_figures = False
 """If save_histo_figures = True, the histograms are saved in the project folder

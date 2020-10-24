@@ -6,12 +6,9 @@ from sklearn.model_selection import GridSearchCV
 
 """Class that deals with training a classifier (SVM or SVR) starting from the relevant configurations 
 to characterize the VAS index obtained during the preliminary clustering phase. """
-class ModelClassifier:
+class ModelSVR:
 
-    def __init__(self, seq_df_path, train_video_idx, test_video_idx, preliminary_clustering, type_classifier='SVM',
-                 verbose=True):
-        assert type_classifier == 'SVM' or type_classifier == 'SVR'
-        self.type_classifier = type_classifier  # Classifier to use: "SVM" or "SVR"
+    def __init__(self, seq_df_path, train_video_idx, test_video_idx, preliminary_clustering, verbose=True):
         self.seq_df_path = seq_df_path  # Path of csv file contained sequences informations
         self.train_video_idx = train_video_idx  # Indexes of the videos to use for training
         self.test_video_idx = test_video_idx  # Indexes of the videos to use for test
@@ -58,18 +55,14 @@ class ModelClassifier:
     """Train classifier using fisher vectors calculated and vas indexes readed of the sequences.
     The type of classifier (SVM or SVR) is passed to constructor of class.
     Return the trained classifier """
-    def __train_classifier(self, regularization_parameter, gamma_parameter):
+    def __train_SVR(self, regularization_parameter, gamma_parameter):
         training_set_histo = np.asarray([self.histo_relevant_config_videos[i] for i in self.train_video_idx])
         training_set_vas = np.asarray([self.vas_sequences[i] for i in self.train_video_idx])
-        if self.type_classifier == "SVM":
-            classifier = svm.SVC(C=regularization_parameter, gamma=gamma_parameter)
-        else:
-            classifier = svm.SVR(C=regularization_parameter, gamma=gamma_parameter)
-        classifier.fit(training_set_histo, training_set_vas)
-        return classifier
+        model_svr = svm.SVR(C=regularization_parameter, gamma=gamma_parameter)
+        return model_svr.fit(training_set_histo, training_set_vas)
 
     """
-    def __train_classifier_maximizing_score(self):
+    def __train_SVR_maximizing_score(self):
         if self.verbose:
             print("---- Find parameters "+self.type_classifier+" that maximizes the total score on the test sequences... ----")
         regularization_test_parameters = np.arange(10, 1010, 10)
@@ -78,7 +71,7 @@ class ModelClassifier:
         best_classifier = None
         for regularization in regularization_test_parameters:
             for gamma in gamma_test_parameters:
-                self.classifier = self.__train_classifier(regularization, gamma)
+                self.classifier = self.__train_SVR(regularization, gamma)
                 current_error = self.calculate_rate_model()[0]
                 if current_error < min_error:
                     best_classifier = self.classifier
@@ -86,46 +79,37 @@ class ModelClassifier:
         return best_classifier
     """
 
-    def __train_classifier_maximizing_score(self):
+    def __train_SVR_maximizing_score(self):
         if self.verbose:
-            print("---- Find parameters "+self.type_classifier+" that maximizes the total score on the test sequences... ----")
+            print("---- Find parameters that maximizes the total score on the test sequences... ----")
         training_set_histo = np.asarray([self.histo_relevant_config_videos[i] for i in self.train_video_idx])
         training_set_vas = np.asarray([self.vas_sequences[i] for i in self.train_video_idx])
-        param = {'kernel': ['rbf'], 'C': [0.1, 1, 10, 100, 1000, 10000],
+        param = {'kernel': ['rbf'], 'C': np.arange(1, 1000, 100),
                  'epsilon': [0.0001, 0.0005, 0.001, 0.005, 0.01, 0.05, 0.1, 0.5, 1, 5, 10],
                  'gamma': [0.0001, 0.001, 0.005, 0.1, 1, 3, 5]},
-        if self.type_classifier == "SVM":
-            model = svm.SVC()
-        else:
-            model = svm.SVR()
-        grids = GridSearchCV(estimator=model, param_grid=param)
+        grids = GridSearchCV(estimator=svm.SVR(), param_grid=param)
         grid_result = grids.fit(training_set_histo, training_set_vas)
         best_params = grid_result.best_params_
-        if self.type_classifier == "SVM":
-            best_model = svm.SVM(kernel="rbf", C=best_params["C"], epsilon=best_params["epsilon"], gamma=best_params["gamma"],
-                           coef0=0.1, shrinking=True,
-                           tol=0.001, cache_size=200, verbose=False, max_iter=-1)
-        else:
-            best_model = svm.SVR(kernel=best_params["kernel"], C=best_params["C"], epsilon=best_params["epsilon"],
-                              gamma=best_params["gamma"],
-                              coef0=0.1, shrinking=True,
-                              tol=0.001, cache_size=200, verbose=False, max_iter=-1)
-        return best_model.fit(training_set_histo, training_set_vas)
+        best_svr = svm.SVR(kernel=best_params["kernel"], C=best_params["C"], epsilon=best_params["epsilon"],
+                          gamma=best_params["gamma"],
+                          coef0=0.1, shrinking=True,
+                          tol=0.001, cache_size=200, verbose=False, max_iter=-1)
+        return best_svr.fit(training_set_histo, training_set_vas)
 
 
     def __init_data_sequences(self):
         self.__generate_histo_relevant_configuration()
         self.__read_vas_videos()
 
-    """Performs the classifier training procedure based on what was done in the preliminary clustering phase"""
-    def train_model(self, regularization_parameter=1,
+    """Performs the model training procedure based on what was done in the preliminary clustering phase"""
+    def train_SVR(self, regularization_parameter=1,
                     gamma_parameter='scale', train_by_max_score=True, classifier_dump_path=None):
         if self.histo_relevant_config_videos == None or self.vas_sequences == None:
             self.__init_data_sequences()
         if train_by_max_score == True:
-            self.classifier = self.__train_classifier_maximizing_score()
+            self.classifier = self.__train_SVR_maximizing_score()
         else:
-            self.classifier = self.__train_classifier(regularization_parameter, gamma_parameter)
+            self.classifier = self.__train_SVR(regularization_parameter, gamma_parameter)
         if classifier_dump_path is not None:
             with open(classifier_dump_path, 'wb') as handle:
                 pickle.dump(self, handle, protocol=pickle.HIGHEST_PROTOCOL)

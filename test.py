@@ -3,7 +3,7 @@ import pandas as pd
 import matplotlib.pyplot as plt
 
 from PreliminaryClustering import PreliminaryClustering
-from ModelClassifier import ModelClassifier
+from ModelSVR import ModelSVR
 from configuration import config_tests
 from utils import get_training_and_test_idx, check_existing_paths
 
@@ -20,9 +20,8 @@ train_video_idx, test_video_idx = get_training_and_test_idx(num_videos, cross_va
 n_kernels_GMM = config_tests.n_kernels_GMM
 thresholds_neutral_to_test = config_tests.thresholds_neutral_to_test
 # Model classifier info and paths
-type_classifier = config_tests.type_classifier
 path_result = "data/test/" + str(n_kernels_GMM)+"_kernels/"
-path_result_thresholds = path_result + "scores_thresholds_"+type_classifier+".csv"
+path_result_thresholds = path_result + "scores_thresholds.csv"
 
 """The procedure is performed which involves performing preliminary clustering and subsequent generation 
 of the classifier (SVM or SVR) given the number of kernels of the GMM and the threshold for the neutral configurations
@@ -32,11 +31,11 @@ to use in the preliminary clustering"""
 def generate_and_test_model(threshold_neutral_configurations,
                             preliminary_clustering, train_videos, test_videos):
     assert 0 < threshold_neutral_configurations < 1
-    model_classifier = ModelClassifier(type_classifier=type_classifier, seq_df_path=seq_df_path,
+    model_svr = ModelSVR(seq_df_path=seq_df_path,
                                  train_video_idx=train_videos, test_video_idx=test_videos,
                                 preliminary_clustering=preliminary_clustering, verbose=False)
-    model_classifier.train_model(train_by_max_score=True)
-    return model_classifier.calculate_rate_model()
+    model_svr.train_SVR(train_by_max_score=True)
+    return model_svr.calculate_rate_model()
 
 """Compare the best scores obtained by varying the thresholds used for the neutral configurations in the 
 preliminary clustering. 
@@ -47,7 +46,8 @@ def compare_performance_different_thresholds():
     out_df_scores = pd.DataFrame(columns=['Thresholds Neutral Configurations', 'Mean Absolute Error', 'Accuracy'])
     min_error = np.inf
     optimal_thresholds = 0
-    n_test_for_threshold = len(train_video_idx)
+    #n_test_for_threshold = len(train_video_idx)
+    n_test_for_threshold = 2
     mean_errors = []
     mean_accuracy = []
     for threshold_idx in np.arange(0,len(thresholds_neutral_to_test)):
@@ -87,8 +87,8 @@ def compare_performance_different_thresholds():
         data = np.hstack((np.array([threshold, threshold_sum_error, threshold_sum_accuracy]).reshape(1, -1)))
         out_df_scores = out_df_scores.append(pd.Series(data.reshape(-1), index=out_df_scores.columns),ignore_index=True)
         out_df_scores.to_csv(path_result_thresholds, index=False, header=True)
-    path_errors_graph = path_result + "errors_graph_"+type_classifier+".png"
-    path_accuracy_graph = path_result + "accuracy_graph_" + type_classifier + ".png"
+    path_errors_graph = path_result + "errors_graph.png"
+    path_accuracy_graph = path_result + "accuracy_graph.png"
     plt.plot(thresholds_neutral_to_test, mean_errors, color="blue")
     plt.ylabel("Mean Absolute Error")
     plt.xlabel("Threshold")
@@ -104,7 +104,7 @@ def compare_performance_different_thresholds():
     return optimal_thresholds, min_error
 
 if __name__ == '__main__':
-    assert n_kernels_GMM > 0 and (type_classifier == 'SVM' or type_classifier == 'SVR')
+    assert n_kernels_GMM > 0
     dir_paths = [path_result]
     file_paths = [coord_df_path, seq_df_path]
     check_existing_paths(dir_paths=dir_paths, file_paths=file_paths)
