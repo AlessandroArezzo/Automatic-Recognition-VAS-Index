@@ -6,7 +6,7 @@ a certain model predictor from its parameters"""
 n_kernels_GMM = 25
 
 # Threshold of the neutral configurations
-threshold_neutral = 0.01
+threshold_neutral = 0.07
 """ If the threshold is 0.3, all those configurations that occur within the sequences with vas equal to 0 
  with a frequency greater than 0.3 will be considered neutral """
 
