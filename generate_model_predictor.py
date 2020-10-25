@@ -42,7 +42,7 @@ if __name__ == '__main__':
     errors = []
     accuracy = []
     if threshold_neutral == None:
-        print("Generate and test models with " + str(n_kernels_GMM) + " kernels GMM, default threshold and using + cross_val_protocol")
+        print("Generate and test models with " + str(n_kernels_GMM) + " kernels GMM, default threshold and using " + cross_val_protocol)
     else:
         print("Generate and test models with "+str(n_kernels_GMM)+" kernels GMM, threshold = "+str(threshold_neutral)+ " and using "+cross_val_protocol )
     for test_idx in np.arange(0, n_test):
