@@ -7,6 +7,9 @@ from ModelSVR import ModelSVR
 from configuration import config_tests
 from utils import get_training_and_test_idx, check_existing_paths
 
+"""Script that allows you to train an SVR using a given number of kernels for preliminary 
+clustering."""
+
 # Dataset info
 coord_df_path = "data/dataset/2d_skeletal_data_unbc_coords.csv"
 seq_df_path = "data/dataset/2d_skeletal_data_unbc_sequence.csv"
@@ -24,7 +27,7 @@ path_result = "data/test/" + str(n_kernels_GMM)+"_kernels/"
 path_result_thresholds = path_result + "scores_thresholds.csv"
 
 """The procedure is performed which involves performing preliminary clustering and subsequent generation 
-of the classifier (SVM or SVR) given the number of kernels of the GMM and the threshold for the neutral configurations
+of SVR given the number of kernels of the GMM and the threshold for the neutral configurations
 to use in the preliminary clustering"""
 
 

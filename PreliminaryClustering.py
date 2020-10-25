@@ -120,8 +120,8 @@ class PreliminaryClustering:
         return histograms_of_videos
 
     """ Apply a strategy to derive the relevant and neutral configurations for classify the VAS index using histograms.
-    Return two lists containing respectively the indices of the relevant and neautral configurations to classify 
-    the vas index """
+    Return two lists containing respectively the indices of the relevant and neutral configurations to classify 
+    the vas index. """
 
     def __generate_relevant_and_neutral_configurations(self, threshold_neutral):
         if self.verbose:
@@ -129,6 +129,8 @@ class PreliminaryClustering:
                 threshold_neutral) + ") ... ----")
         seq_df = pd.read_csv(self.seq_df_path)
         index_neutral_configurations = []
+        if threshold_neutral == None:
+            threshold_neutral = max([histo[-1] for histo in self.histograms_of_videos])/2
         for seq_num in self.train_video_idx:
             vas = seq_df.iloc[seq_num][1]
             hist = self.histograms_of_videos[seq_num]

@@ -10,9 +10,6 @@ n_kernels_GMM = 25
 # Indexes of the landmarks to use for fitting GMM and description sequences
 selected_lndks_idx = [5, 11, 19, 24, 37, 41, 56, 58]
 
-# Type of the classifier ('SVR' or 'SVM')
-type_classifier = 'SVR'
-
 # Thresholds to test
 thresholds_neutral_to_test = np.arange(0.01, 0.1, 0.005)
 

@@ -4,7 +4,7 @@ import numpy as np
 from sklearn import svm
 from sklearn.model_selection import GridSearchCV
 
-"""Class that deals with training a classifier (SVM or SVR) starting from the relevant configurations 
+"""Class that deals with training an SVR starting from the relevant configurations 
 to characterize the VAS index obtained during the preliminary clustering phase. """
 class ModelSVR:
 
@@ -52,32 +52,13 @@ class ModelSVR:
             vas_sequences.append(seq_df.iloc[num_video][1])
         self.vas_sequences = vas_sequences
 
-    """Train classifier using fisher vectors calculated and vas indexes readed of the sequences.
-    The type of classifier (SVM or SVR) is passed to constructor of class.
+    """Train SVR using fisher vectors calculated and vas indexes readed of the sequences.
     Return the trained classifier """
     def __train_SVR(self, regularization_parameter, gamma_parameter):
         training_set_histo = np.asarray([self.histo_relevant_config_videos[i] for i in self.train_video_idx])
         training_set_vas = np.asarray([self.vas_sequences[i] for i in self.train_video_idx])
         model_svr = svm.SVR(C=regularization_parameter, gamma=gamma_parameter)
         return model_svr.fit(training_set_histo, training_set_vas)
-
-    """
-    def __train_SVR_maximizing_score(self):
-        if self.verbose:
-            print("---- Find parameters "+self.type_classifier+" that maximizes the total score on the test sequences... ----")
-        regularization_test_parameters = np.arange(10, 1010, 10)
-        gamma_test_parameters = np.arange(0.1, 1.1, 0.1)
-        min_error = np.inf
-        best_classifier = None
-        for regularization in regularization_test_parameters:
-            for gamma in gamma_test_parameters:
-                self.classifier = self.__train_SVR(regularization, gamma)
-                current_error = self.calculate_rate_model()[0]
-                if current_error < min_error:
-                    best_classifier = self.classifier
-                    min_error = current_error
-        return best_classifier
-    """
 
     def __train_SVR_maximizing_score(self):
         if self.verbose:
@@ -95,7 +76,6 @@ class ModelSVR:
                           coef0=0.1, shrinking=True,
                           tol=0.001, cache_size=200, verbose=False, max_iter=-1)
         return best_svr.fit(training_set_histo, training_set_vas)
-
 
     def __init_data_sequences(self):
         self.__generate_histo_relevant_configuration()
@@ -148,5 +128,5 @@ class ModelSVR:
     def load_model_from_pickle(pickle_path):
         with open(pickle_path, 'rb') as f:
             model_classifier = pickle.load(f)
-            assert isinstance(model_classifier, ModelClassifier)
+            assert isinstance(model_classifier, ModelSVR)
         return model_classifier

@@ -6,9 +6,8 @@ from PreliminaryClustering import PreliminaryClustering
 from ModelSVR import ModelSVR
 from configuration import config_generate_model
 from utils import get_training_and_test_idx, check_existing_paths
-"""Script that allows you to train a classifier (SVM or SVR) using a given number of kernels for preliminary 
-clustering, gamma and regularization parameters of the model to be fitted. The model is saved in a pickle file."""
-
+"""Script that allows you to train an SVR using a given number of kernels for preliminary 
+clustering."""
 
 
 # Dataset info
@@ -28,14 +27,11 @@ sub_directory = str(n_kernels_GMM) + "_kernels"
 path_histo_figures = "data/classifier/" + sub_directory + "/histo_figures/"
 preliminary_clustering_path = "data/classifier/" + sub_directory + "/preliminary_clustering.pickle"
 # Model classifier info and paths
-train_by_max_score = config_generate_model.train_by_max_score
-regularization_parameter = config_generate_model.regularization_parameter
-gamma_parameter = config_generate_model.gamma_parameter
 path_results = "data/classifier/" + sub_directory + "/"
 path_errors = path_results + "/errors_tests/"
 
 if __name__ == '__main__':
-    assert n_kernels_GMM > 0 and 0 < threshold_neutral < 1
+    assert n_kernels_GMM > 0 and (threshold_neutral == None or 0 < threshold_neutral < 1)
     dir_paths = [path_errors]
     if save_histo_figures:
         dir_paths.append(path_histo_figures)
@@ -45,7 +41,10 @@ if __name__ == '__main__':
     n_test = len(train_video_idx)
     errors = []
     accuracy = []
-    print("Generate and test models with "+str(n_kernels_GMM)+" kernels GMM, threshold = "+str(threshold_neutral)+ " and using "+cross_val_protocol )
+    if threshold_neutral == None:
+        print("Generate and test models with " + str(n_kernels_GMM) + " kernels GMM, default threshold and using + cross_val_protocol")
+    else:
+        print("Generate and test models with "+str(n_kernels_GMM)+" kernels GMM, threshold = "+str(threshold_neutral)+ " and using "+cross_val_protocol )
     for test_idx in np.arange(0, n_test):
         print("- Test "+str(test_idx+1)+"/"+str(n_test)+" -")
         test_videos = test_video_idx[test_idx]
@@ -69,8 +68,7 @@ if __name__ == '__main__':
                                  test_video_idx=test_videos,
                                  preliminary_clustering=preliminary_clustering)
             print("-- Train and save SVR model... --")
-            model_svr.train_SVR(regularization_parameter=regularization_parameter,
-                                gamma_parameter=gamma_parameter, train_by_max_score=train_by_max_score)
+            model_svr.train_SVR(train_by_max_score=True)
             print("-- Calculate scores for trained SVR... --")
             current_test_path_error = path_errors+"test_"+str(test_idx)+".csv"
             current_error, current_accuracy = model_svr.calculate_rate_model(path_scores_parameters=current_test_path_error)
