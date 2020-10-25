@@ -3,7 +3,7 @@ import numpy as np
 an SVR predictor from its parameters"""
 
 # Number of clusters of the GMM
-n_kernels_GMM = 200
+n_kernels_GMM = 100
 
 # Threshold of the neutral configurations
 threshold_neutral = None
@@ -14,6 +14,7 @@ threshold_neutral = None
 
 # Indexes of the landmarks to use for fitting GMM and description sequences
 selected_lndks_idx = [5, 11, 19, 24, 37, 41, 56, 58]
+#selected_lndks_idx = np.arange(66)
 
 # Defines if the histograms of the dataset sequences must be saved in their respective files
 save_histo_figures = False
