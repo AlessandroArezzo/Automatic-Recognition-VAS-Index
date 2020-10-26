@@ -47,7 +47,7 @@ if __name__ == '__main__':
     else:
         print("Generate and test models with "+str(n_kernels_GMM)+" kernels GMM, threshold = "+str(threshold_neutral)+ " and using "+cross_val_protocol )
     for test_idx in np.arange(0, n_test):
-        print("- Test "+str(test_idx+1)+"/"+str(n_test)+" -")
+        print("- Round "+str(test_idx+1)+"/"+str(n_test)+" -")
         test_videos = test_video_idx[test_idx]
         train_videos = train_video_idx[test_idx]
         print("-- Execute preliminary clustering using " + str(n_kernels_GMM) + " kernels GMM... --")
@@ -75,7 +75,7 @@ if __name__ == '__main__':
             current_error, current_accuracy = model_svr.calculate_rate_model(path_scores_parameters=current_test_path_error)
             errors.append(current_error)
             accuracy.append(current_accuracy)
-            print("-- Absolute Error: " + str(current_error)+" / Accuracy: " + str(current_accuracy)+"% --")
+            print("-- Mean Absolute Error: " + str(current_error)+" / Accuracy: " + str(current_accuracy)+"% --")
         data = np.hstack((np.array([test_idx+1, current_error, current_accuracy]).reshape(1, -1)))
         out_df_scores = out_df_scores.append(pd.Series(data.reshape(-1), index=out_df_scores.columns),
                                              ignore_index=True)

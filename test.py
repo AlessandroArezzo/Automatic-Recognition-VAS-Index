@@ -59,7 +59,7 @@ def compare_performance_different_thresholds():
         threshold_sum_accuracy = 0
         print("Execute experiments using threshold=" + str(threshold) + "...")
         for test_idx in np.arange(0, n_test_for_threshold):
-            print("---- Test "+str(test_idx+1)+"/"+str(n_test_for_threshold)+"... ----")
+            print("---- Round "+str(test_idx+1)+"/"+str(n_test_for_threshold)+"... ----")
             test_videos = test_video_idx[test_idx]
             train_videos = train_video_idx[test_idx]
             preliminary_clustering = PreliminaryClustering(coord_df_path=coord_df_path,
