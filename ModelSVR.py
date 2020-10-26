@@ -62,7 +62,7 @@ class ModelSVR:
 
     def __train_SVR_maximizing_score(self):
         if self.verbose:
-            print("---- Find parameters that maximizes the total score on the test sequences... ----")
+            print("---- Find parameters that minimizes the mean square error... ----")
         training_set_histo = np.asarray([self.histo_relevant_config_videos[i] for i in self.train_video_idx])
         training_set_vas = np.asarray([self.vas_sequences[i] for i in self.train_video_idx])
         param = {'kernel': ['rbf'], 'C': np.arange(1, 1000, 100),
@@ -72,9 +72,7 @@ class ModelSVR:
         grid_result = grids.fit(training_set_histo, training_set_vas)
         best_params = grid_result.best_params_
         best_svr = svm.SVR(kernel=best_params["kernel"], C=best_params["C"], epsilon=best_params["epsilon"],
-                          gamma=best_params["gamma"],
-                          coef0=0.1, shrinking=True,
-                          tol=0.001, cache_size=200, verbose=False, max_iter=-1)
+                          gamma=best_params["gamma"])
         return best_svr.fit(training_set_histo, training_set_vas)
 
     def __init_data_sequences(self):

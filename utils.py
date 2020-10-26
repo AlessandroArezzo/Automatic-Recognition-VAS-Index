@@ -16,7 +16,7 @@ def get_training_and_test_idx(num_videos, cross_val_protocol):
     all_test_idx = []
     if cross_val_protocol == "Leave-One-Sequence-Out":
         for video_idx in np.arange(0, num_videos):
-            all_test_idx.append(np.asarray(video_idx))
+            all_test_idx.append(np.array([video_idx]))
             all_training_idx.append(np.delete(np.arange(0,num_videos),video_idx))
     elif cross_val_protocol == "5-fold-cross-validation":
         for video_idx in np.arange(0, num_videos, 5):

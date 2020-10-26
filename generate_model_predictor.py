@@ -39,6 +39,7 @@ if __name__ == '__main__':
     out_df_scores = pd.DataFrame(columns=['Num_test', 'Mean Absolute Error', 'Accuracy(%)'])
     check_existing_paths(dir_paths=dir_paths, file_paths=file_paths)
     n_test = len(train_video_idx)
+    path_histo_current = None
     errors = []
     accuracy = []
     if threshold_neutral == None:
@@ -55,9 +56,9 @@ if __name__ == '__main__':
                                                        selected_lndks_idx=selected_lndks_idx,
                                                        train_video_idx=train_videos,
                                                        n_kernels=n_kernels_GMM)
-        path_histo_current = path_histo_figures + "test_"+str(test_idx)+"_"
-        preliminary_clustering.execute_preliminary_clustering(plot_and_save_histo=save_histo_figures,
-           histo_figures_path=path_histo_current, threshold_neutral=threshold_neutral)
+        if save_histo_figures == True:
+            path_histo_current = path_histo_figures + "test_"+str(test_idx)+"_"
+        preliminary_clustering.execute_preliminary_clustering(histo_figures_path=path_histo_current, threshold_neutral=threshold_neutral)
         if len(preliminary_clustering.index_relevant_configurations) == 0:
             print("-- No relevant configurations were found using "+str(n_kernels_GMM)+" kernels and "+str(threshold_neutral)+" for the threshold of neutral configurations "
                   "(try to lower the threshold by analyzing the histograms produced by clustering in the test module )--")

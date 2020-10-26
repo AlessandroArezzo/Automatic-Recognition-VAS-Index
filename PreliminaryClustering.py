@@ -125,12 +125,16 @@ class PreliminaryClustering:
 
     def __generate_relevant_and_neutral_configurations(self, threshold_neutral):
         if self.verbose:
-            print("---- Extracts relevant and neutral configurations analyzing train sequences (with threshold=" + str(
-                threshold_neutral) + ") ... ----")
+            output = "---- Extracts relevant and neutral configurations analyzing train sequences"
+            if threshold_neutral != None:
+                output += " (with threshold=" + str(
+                threshold_neutral) +")"
+            output += "... ----"
+            print(output)
         seq_df = pd.read_csv(self.seq_df_path)
         index_neutral_configurations = []
         if threshold_neutral == None:
-            threshold_neutral = max([histo[-1] for histo in self.histograms_of_videos])/2
+            threshold_neutral = max([histo[-1] for histo in self.histograms_of_videos])/3
         for seq_num in self.train_video_idx:
             vas = seq_df.iloc[seq_num][1]
             hist = self.histograms_of_videos[seq_num]
@@ -158,9 +162,8 @@ class PreliminaryClustering:
     """ Execute preliminary clustering using the parameters passed to class constructor.
     If plot_and_save_histo is setted on True value the figures of histograms of videos is saved in files """
 
-    def execute_preliminary_clustering(self, threshold_neutral=0.015, preliminary_clustering_dump_path=None,
-                                       histo_figures_path=None,
-                                       plot_and_save_histo=False):
+    def execute_preliminary_clustering(self, threshold_neutral=None, preliminary_clustering_dump_path=None,
+                                       histo_figures_path=None):
         if self.velocities == None:
             self.velocities = self.__get_velocities_frames()  # Velocities of landmarks for each frame of the videos content in the dataset
         if self.gmm == None:
@@ -174,7 +177,7 @@ class PreliminaryClustering:
         self.index_relevant_configurations, self.index_neutral_configurations = \
             self.__generate_relevant_and_neutral_configurations(
                 threshold_neutral)  # Relevant and neutral configurations for the classification of the vas index
-        if plot_and_save_histo:
+        if histo_figures_path != None:
             self.__plot_and_save_histograms(histo_figures_path)
         if preliminary_clustering_dump_path is not None:
             with open(preliminary_clustering_dump_path, 'wb') as handle:
