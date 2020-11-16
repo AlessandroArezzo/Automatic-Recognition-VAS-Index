@@ -49,7 +49,7 @@ The respective value of the parameter input to the script is used as the kernel 
 Save the results in a csv file containing the comparison of the best scores found for each threshold """
 
 def compare_performance_different_thresholds():
-    out_df_scores = pd.DataFrame(columns=['Thresholds Neutral Configurations', 'Mean Absolute Error', 'Accuracy (%)', 'relevant configurations'])
+    out_df_scores = pd.DataFrame(columns=['Thresholds Neutral Configurations', 'Mean Absolute Error', 'Accuracy (%)', '#clusters'])
     n_test_for_threshold = len(train_video_idx)
     thresholds_results = {}
     if os.path.isfile(path_result_thresholds):

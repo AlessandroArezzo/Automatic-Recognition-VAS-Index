@@ -37,9 +37,10 @@ if __name__ == '__main__':
     if save_histo_figures:
         dir_paths.append(path_histo_figures)
     file_paths = [coord_df_path, seq_df_path]
-    out_df_scores = pd.DataFrame(columns=['Num_test', 'Mean Absolute Error', 'Accuracy(%)'])
+    out_df_scores = pd.DataFrame(columns=['#round', 'Mean Absolute Error', 'Accuracy(%)', '#clusters'])
     check_existing_paths(dir_paths=dir_paths, file_paths=file_paths)
     n_test = len(train_video_idx)
+    path_results_csv = path_results + "results.csv"
     path_histo_current = None
     errors = []
     accuracy = []
@@ -60,11 +61,13 @@ if __name__ == '__main__':
         if save_histo_figures == True:
             path_histo_current = path_histo_figures + "test_"+str(test_idx)+"_"
         preliminary_clustering.execute_preliminary_clustering(histo_figures_path=path_histo_current, threshold_neutral=threshold_neutral)
-        if len(preliminary_clustering.index_relevant_configurations) == 0:
+        num_relevant_config = len(preliminary_clustering.index_relevant_configurations)
+        if num_relevant_config == 0:
             print("-- No relevant configurations were found using "+str(n_kernels_GMM)+" kernels and "+str(threshold_neutral)+" for the threshold of neutral configurations "
                   "(try to lower the threshold by analyzing the histograms produced by clustering in the test module )--")
             current_error = current_accuracy = "None"
         else:
+            print("-- Preliminary clustering ended: "+str(num_relevant_config)+" relevant clusters founded --")
             model_svr = ModelSVR(seq_df_path=seq_df_path,
                                  train_video_idx=train_videos,
                                  test_video_idx=test_videos,
@@ -77,13 +80,12 @@ if __name__ == '__main__':
             errors.append(current_error)
             accuracy.append(current_accuracy)
             print("-- Mean Absolute Error: " + str(current_error)+" / Accuracy: " + str(current_accuracy)+"% --")
-        data = np.hstack((np.array([test_idx+1, current_error, current_accuracy]).reshape(1, -1)))
+        data = np.hstack((np.array([test_idx+1, current_error, current_accuracy, num_relevant_config]).reshape(1, -1)))
         out_df_scores = out_df_scores.append(pd.Series(data.reshape(-1), index=out_df_scores.columns),
                                              ignore_index=True)
-    path_results_csv = path_results + "results.csv"
+        out_df_scores.to_csv(path_results_csv, index=False, header=True)
     path_errors_histo = path_results + "graphics_errors.png"
     path_accuracy_histo = path_results + "graphics_accuracy.png"
-    out_df_scores.to_csv(path_results_csv, index=False, header=True)
     print("Results saved in a csv file on path '" + path_results_csv)
     mean_error = sum(errors)/n_test
     mean_error = round(mean_error, 3)
