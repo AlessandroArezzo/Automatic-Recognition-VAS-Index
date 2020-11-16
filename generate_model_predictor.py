@@ -4,7 +4,7 @@ import matplotlib.pyplot as plt
 
 from PreliminaryClustering import PreliminaryClustering
 from ModelSVR import ModelSVR
-from configuration import config_generate_model
+from configuration import config
 from utils import get_training_and_test_idx, check_existing_paths
 """Script that allows you to train an SVR using a given number of kernels for preliminary 
 clustering."""
@@ -15,21 +15,21 @@ coord_df_path = "data/dataset/2d_skeletal_data_unbc_coords.csv"
 seq_df_path = "data/dataset/2d_skeletal_data_unbc_sequence.csv"
 num_lndks = 66
 # Features info
-selected_lndks_idx = config_generate_model.selected_lndks_idx
+selected_lndks_idx = config.selected_lndks_idx
 num_videos = 200
-cross_val_protocol = config_generate_model.cross_val_protocol
+cross_val_protocol = config.cross_val_protocol
 train_video_idx, test_video_idx = get_training_and_test_idx(num_videos, cross_val_protocol)
 # Preliminary clustering info and paths
-n_kernels_GMM = config_generate_model.n_kernels_GMM
-threshold_neutral = config_generate_model.threshold_neutral
-save_histo_figures = config_generate_model.save_histo_figures
+n_kernels_GMM = config.n_kernels_GMM
+threshold_neutral = config.threshold_neutral
+save_histo_figures = config.save_histo_figures
 sub_directory = str(n_kernels_GMM) + "_kernels"
 path_histo_figures = "data/classifier/" + sub_directory + "/histo_figures/"
 preliminary_clustering_path = "data/classifier/" + sub_directory + "/preliminary_clustering.pickle"
 # Model classifier info and paths
 path_results = "data/classifier/" + sub_directory + "/"
 path_errors = path_results + "errors_tests/"
-n_jobs = config_generate_model.n_jobs
+n_jobs = config.n_jobs
 
 if __name__ == '__main__':
     assert n_kernels_GMM > 0 and (threshold_neutral == None or 0 < threshold_neutral < 1)

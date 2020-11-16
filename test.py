@@ -4,7 +4,7 @@ import matplotlib.pyplot as plt
 
 from PreliminaryClustering import PreliminaryClustering
 from ModelSVR import ModelSVR
-from configuration import config_tests
+from configuration import config
 from utils import get_training_and_test_idx, check_existing_paths
 import csv
 import os
@@ -17,17 +17,17 @@ coord_df_path = "data/dataset/2d_skeletal_data_unbc_coords.csv"
 seq_df_path = "data/dataset/2d_skeletal_data_unbc_sequence.csv"
 num_lndks = 66
 # Features info
-selected_lndks_idx = config_tests.selected_lndks_idx
+selected_lndks_idx = config.selected_lndks_idx
 num_videos = 200
-cross_val_protocol = config_tests.cross_val_protocol
+cross_val_protocol = config.cross_val_protocol
 train_video_idx, test_video_idx = get_training_and_test_idx(num_videos, cross_val_protocol)
 # Preliminary clustering info and paths
-n_kernels_GMM = config_tests.n_kernels_GMM
-thresholds_neutral_to_test = config_tests.thresholds_neutral_to_test
+n_kernels_GMM = config.n_kernels_GMM
+thresholds_neutral_to_test = config.thresholds_neutral_to_test
 # Model classifier info and paths
 path_result = "data/test/" + str(n_kernels_GMM)+"_kernels/"
 path_result_thresholds = path_result + "scores_thresholds.csv"
-n_jobs = config_tests.n_jobs
+n_jobs = config.n_jobs
 
 """The procedure is performed which involves performing preliminary clustering and subsequent generation 
 of SVR given the number of kernels of the GMM and the threshold for the neutral configurations
