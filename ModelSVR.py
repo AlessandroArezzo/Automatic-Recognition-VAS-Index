@@ -60,20 +60,19 @@ class ModelSVR:
         model_svr = svm.SVR(C=regularization_parameter, gamma=gamma_parameter)
         return model_svr.fit(training_set_histo, training_set_vas)
 
-    def __train_SVR_maximizing_score(self):
+    def __train_SVR_maximizing_score(self, n_jobs):
         if self.verbose:
-            print("---- Find parameters that minimizes the mean square error... ----")
+            print("---- Find parameters that minimizes mean absolute error... ----")
         training_set_histo = np.asarray([self.histo_relevant_config_videos[i] for i in self.train_video_idx])
         training_set_vas = np.asarray([self.vas_sequences[i] for i in self.train_video_idx])
-        param = {'kernel': ['rbf'], 'C': np.arange(1, 1000, 100),
+        param = {'kernel': ['rbf'], 'C': np.arange(1, 1000, 50),
                  'epsilon': [0.0001, 0.0005, 0.001, 0.005, 0.01, 0.05, 0.1, 0.5, 1, 5, 10],
-                 'gamma': [0.0001, 0.001, 0.005, 0.1, 1, 3, 5]},
-        grids = GridSearchCV(estimator=svm.SVR(), param_grid=param)
-        grid_result = grids.fit(training_set_histo, training_set_vas)
+                 'gamma': [0.0001, 0.001, 0.005, 0.1, 1, 3, 5]}
+        grid_result = GridSearchCV(estimator=svm.SVR(), param_grid=param, scoring='neg_mean_absolute_error',
+                             n_jobs=n_jobs).fit(training_set_histo, training_set_vas)
         best_params = grid_result.best_params_
-        best_svr = svm.SVR(kernel=best_params["kernel"], C=best_params["C"], epsilon=best_params["epsilon"],
-                          gamma=best_params["gamma"])
-        return best_svr.fit(training_set_histo, training_set_vas)
+        return svm.SVR(kernel=best_params["kernel"], C=best_params["C"], epsilon=best_params["epsilon"],
+                          gamma=best_params["gamma"]).fit(training_set_histo, training_set_vas)
 
     def __init_data_sequences(self):
         self.__generate_histo_relevant_configuration()
@@ -81,11 +80,11 @@ class ModelSVR:
 
     """Performs the model training procedure based on what was done in the preliminary clustering phase"""
     def train_SVR(self, regularization_parameter=1,
-                    gamma_parameter='scale', train_by_max_score=True, classifier_dump_path=None):
+                    gamma_parameter='scale', train_by_max_score=True, classifier_dump_path=None, n_jobs=1):
         if self.histo_relevant_config_videos == None or self.vas_sequences == None:
             self.__init_data_sequences()
         if train_by_max_score == True:
-            self.classifier = self.__train_SVR_maximizing_score()
+            self.classifier = self.__train_SVR_maximizing_score(n_jobs=n_jobs)
         else:
             self.classifier = self.__train_SVR(regularization_parameter, gamma_parameter)
         if classifier_dump_path is not None:

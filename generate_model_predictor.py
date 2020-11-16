@@ -28,11 +28,12 @@ path_histo_figures = "data/classifier/" + sub_directory + "/histo_figures/"
 preliminary_clustering_path = "data/classifier/" + sub_directory + "/preliminary_clustering.pickle"
 # Model classifier info and paths
 path_results = "data/classifier/" + sub_directory + "/"
-path_errors = path_results + "/errors_tests/"
+path_errors = path_results + "errors_tests/"
+n_jobs = config_generate_model.n_jobs
 
 if __name__ == '__main__':
     assert n_kernels_GMM > 0 and (threshold_neutral == None or 0 < threshold_neutral < 1)
-    dir_paths = [path_errors]
+    dir_paths = [path_results, path_errors]
     if save_histo_figures:
         dir_paths.append(path_histo_figures)
     file_paths = [coord_df_path, seq_df_path]
@@ -69,7 +70,7 @@ if __name__ == '__main__':
                                  test_video_idx=test_videos,
                                  preliminary_clustering=preliminary_clustering)
             print("-- Train and save SVR model... --")
-            model_svr.train_SVR(train_by_max_score=True)
+            model_svr.train_SVR(train_by_max_score=True, n_jobs=n_jobs)
             print("-- Calculate scores for trained SVR... --")
             current_test_path_error = path_errors+"test_"+str(test_idx)+".csv"
             current_error, current_accuracy = model_svr.calculate_rate_model(path_scores_parameters=current_test_path_error)

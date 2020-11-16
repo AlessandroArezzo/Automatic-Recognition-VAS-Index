@@ -3,10 +3,10 @@ import numpy as np
 an SVR predictor from its parameters"""
 
 # Number of clusters of the GMM
-n_kernels_GMM = 100
+n_kernels_GMM = 25
 
 # Threshold of the neutral configurations
-threshold_neutral = None
+threshold_neutral = 0.18
 """ For example if the threshold is 0.3: all those configurations that occur within the sequences with vas equal to 0 
  with a frequency greater than 0.3 will be considered neutral.
   If threshold is None: all those configurations of the sequences with vas equal to 0 that
@@ -15,6 +15,8 @@ threshold_neutral = None
 # Indexes of the landmarks to use for fitting GMM and description sequences
 selected_lndks_idx = [5, 11, 19, 24, 37, 41, 56, 58]
 #selected_lndks_idx = np.arange(66)
+
+n_jobs = 4  # Number of threads to use to perform SVR training
 
 # Defines if the histograms of the dataset sequences must be saved in their respective files
 save_histo_figures = False

@@ -2,10 +2,10 @@ import os
 import numpy as np
 
 def check_existing_paths(dir_paths=[],file_paths=[]):
+    project_path = os.getcwd()+"/"
     for dir_path in dir_paths:
         if not os.path.isdir(dir_path):
-            print("Configuration error: dir path '"+dir_path+"' not exist in project")
-            exit(1)
+            os.mkdir(project_path+dir_path)
     for file_path in file_paths:
         if not os.path.isfile(file_path):
             print("Configuration error: file '" + file_path + "' not exist in project")

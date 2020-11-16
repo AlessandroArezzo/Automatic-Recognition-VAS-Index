@@ -1,7 +1,8 @@
 import pickle
 import numpy as np
 import pandas as pd
-from fishervector import FisherVectorGMM
+#from fishervector import FisherVectorGMM
+from fisherVector import FisherVectorGMM
 import matplotlib.pyplot as plt
 import matplotlib
 
