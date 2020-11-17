@@ -5,7 +5,7 @@ import matplotlib.pyplot as plt
 from PreliminaryClustering import PreliminaryClustering
 from ModelSVR import ModelSVR
 from configuration import config
-from utils import get_training_and_test_idx, check_existing_paths
+from utils import get_training_and_test_idx, check_existing_paths, plotMatrix
 """Script that allows you to train an SVR using a given number of kernels for preliminary 
 clustering."""
 
@@ -14,6 +14,7 @@ clustering."""
 coord_df_path = "data/dataset/2d_skeletal_data_unbc_coords.csv"
 seq_df_path = "data/dataset/2d_skeletal_data_unbc_sequence.csv"
 num_lndks = 66
+weighted_samples = config.weighted_samples
 # Features info
 selected_lndks_idx = config.selected_lndks_idx
 num_videos = 200
@@ -29,21 +30,23 @@ preliminary_clustering_path = "data/classifier/" + sub_directory + "/preliminary
 # Model classifier info and paths
 path_results = "data/classifier/" + sub_directory + "/"
 path_errors = path_results + "errors_tests/"
+path_confusion_matrices = path_results + "confusion_matrices/"
 n_jobs = config.n_jobs
 
 if __name__ == '__main__':
     assert n_kernels_GMM > 0 and (threshold_neutral == None or 0 < threshold_neutral < 1)
-    dir_paths = [path_results, path_errors]
+    dir_paths = [path_results, path_errors, path_confusion_matrices]
     if save_histo_figures:
         dir_paths.append(path_histo_figures)
     file_paths = [coord_df_path, seq_df_path]
-    out_df_scores = pd.DataFrame(columns=['#round', 'Mean Absolute Error', 'Accuracy(%)', '#clusters'])
+    out_df_scores = pd.DataFrame(columns=['#round', '#num_clusters', 'Mean Absolute Error'])
     check_existing_paths(dir_paths=dir_paths, file_paths=file_paths)
     n_test = len(train_video_idx)
     path_results_csv = path_results + "results.csv"
+    path_conf_matrix_csv = path_results + "confusion_matrix.csv"
     path_histo_current = None
     errors = []
-    accuracy = []
+    confusion_matrix = np.zeros(shape=(11, 11))
     if threshold_neutral == None:
         print("Generate and test models with " + str(n_kernels_GMM) + " kernels GMM, default threshold and using " + cross_val_protocol)
     else:
@@ -71,42 +74,40 @@ if __name__ == '__main__':
             model_svr = ModelSVR(seq_df_path=seq_df_path,
                                  train_video_idx=train_videos,
                                  test_video_idx=test_videos,
-                                 preliminary_clustering=preliminary_clustering)
+                                 preliminary_clustering=preliminary_clustering,
+                                 weighted_samples=weighted_samples)
             print("-- Train and save SVR model... --")
             model_svr.train_SVR(train_by_max_score=True, n_jobs=n_jobs)
             print("-- Calculate scores for trained SVR... --")
             current_test_path_error = path_errors+"test_"+str(test_idx)+".csv"
-            current_error, current_accuracy = model_svr.calculate_rate_model(path_scores_parameters=current_test_path_error)
+            current_path_cm = path_confusion_matrices + "test_" + str(test_idx) + ".png"
+            current_error, current_confusion_matrix = model_svr.calculate_rate_model(path_scores_parameters=current_test_path_error,
+                                                                                     path_scores_cm=current_path_cm)
             errors.append(current_error)
-            accuracy.append(current_accuracy)
-            print("-- Mean Absolute Error: " + str(current_error)+" / Accuracy: " + str(current_accuracy)+"% --")
-        data = np.hstack((np.array([test_idx+1, current_error, current_accuracy, num_relevant_config]).reshape(1, -1)))
+            print("-- Mean Absolute Error: " + str(current_error)+" --")
+            confusion_matrix += current_confusion_matrix
+        data = np.hstack((np.array([test_idx+1, num_relevant_config, current_error]).reshape(1, -1)))
         out_df_scores = out_df_scores.append(pd.Series(data.reshape(-1), index=out_df_scores.columns),
                                              ignore_index=True)
         out_df_scores.to_csv(path_results_csv, index=False, header=True)
-    path_errors_histo = path_results + "graphics_errors.png"
-    path_accuracy_histo = path_results + "graphics_accuracy.png"
-    print("Results saved in a csv file on path '" + path_results_csv)
-    mean_error = sum(errors)/n_test
+    mean_error = sum(errors) / n_test
     mean_error = round(mean_error, 3)
+    print("Mean Absolute Error: " + str(mean_error))
+
+    path_errors = path_results + "graphics_errors.png"
+    path_conf_matrix = path_results + "confusion_matrix.png"
+    print("Mean absolute errors detected at each round saved in a csv file on path '" + path_results_csv+"'")
+    print("Confusion matrices detected at each round saved in png files on path '" + path_confusion_matrices+"'")
+
+    plotMatrix(cm=confusion_matrix, labels=np.arange(0, 11), normalize=True, fname=path_conf_matrix)
+    print("Overall confusion matrix saved in png files on path '" + path_conf_matrix+"'")
     plt.bar(np.arange(1, n_test+1), errors, color="blue")
     plt.axhline(y=mean_error, xmin=0, xmax=n_test+1, color="red", label='Mean Absolute Error: '+str(mean_error))
     plt.ylabel("Mean Absolute Error")
     plt.xlabel("Num test")
     plt.title("Graphics Mean Absolute Errors")
     plt.legend()
-    plt.savefig(path_errors_histo)
+    plt.savefig(path_errors)
     plt.close()
-    mean_accuracy = sum(accuracy) / n_test
-    mean_accuracy = round(mean_accuracy, 3)
-    plt.bar(np.arange(1, n_test + 1), accuracy, color="blue")
-    plt.axhline(y=mean_accuracy, xmin=0, xmax=n_test + 1, color="red", label='Accuracy: ' + str(mean_accuracy))
-    plt.ylabel("Accuracy")
-    plt.xlabel("Num test")
-    plt.title("Graphics Accuracy Model")
-    plt.legend()
-    plt.savefig(path_accuracy_histo)
-    plt.close()
-    print("Histogram of the results generated saved in a png file on path '" + path_results)
-    print("Mean Absolute Error: " + str(mean_error))
-    print("Accuracy: " + str(mean_accuracy)+"%")
+    print("Histogram of the mean absolute error detected saved in a png file on path '" + path_results+"'")
+

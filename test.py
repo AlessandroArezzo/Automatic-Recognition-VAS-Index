@@ -5,7 +5,7 @@ import matplotlib.pyplot as plt
 from PreliminaryClustering import PreliminaryClustering
 from ModelSVR import ModelSVR
 from configuration import config
-from utils import get_training_and_test_idx, check_existing_paths
+from utils import get_training_and_test_idx, check_existing_paths, plotMatrix
 import csv
 import os
 
@@ -16,6 +16,7 @@ clustering."""
 coord_df_path = "data/dataset/2d_skeletal_data_unbc_coords.csv"
 seq_df_path = "data/dataset/2d_skeletal_data_unbc_sequence.csv"
 num_lndks = 66
+weighted_samples = config.weighted_samples
 # Features info
 selected_lndks_idx = config.selected_lndks_idx
 num_videos = 200
@@ -26,6 +27,7 @@ n_kernels_GMM = config.n_kernels_GMM
 thresholds_neutral_to_test = config.thresholds_neutral_to_test
 # Model classifier info and paths
 path_result = "data/test/" + str(n_kernels_GMM)+"_kernels/"
+path_cm = path_result + "confusion_matrices/"
 path_result_thresholds = path_result + "scores_thresholds.csv"
 n_jobs = config.n_jobs
 
@@ -39,7 +41,8 @@ def generate_and_test_model(threshold_neutral_configurations,
     assert 0 < threshold_neutral_configurations < 1
     model_svr = ModelSVR(seq_df_path=seq_df_path,
                          train_video_idx=train_videos, test_video_idx=test_videos,
-                         preliminary_clustering=preliminary_clustering, verbose=False)
+                         preliminary_clustering=preliminary_clustering, weighted_samples=weighted_samples,
+                         verbose=False)
     model_svr.train_SVR(train_by_max_score=True, n_jobs=n_jobs)
     return model_svr.calculate_rate_model()
 
@@ -49,7 +52,7 @@ The respective value of the parameter input to the script is used as the kernel 
 Save the results in a csv file containing the comparison of the best scores found for each threshold """
 
 def compare_performance_different_thresholds():
-    out_df_scores = pd.DataFrame(columns=['Thresholds Neutral Configurations', 'Mean Absolute Error', 'Accuracy (%)', '#clusters'])
+    out_df_scores = pd.DataFrame(columns=['Thresholds Neutral Configurations', '#clusters', 'Mean Absolute Error'])
     n_test_for_threshold = len(train_video_idx)
     thresholds_results = {}
     if os.path.isfile(path_result_thresholds):
@@ -58,18 +61,17 @@ def compare_performance_different_thresholds():
             for idx, row in enumerate(reader):
                 if idx > 0:
                     thresholds_results[float(row[0])] = {}
-                    thresholds_results[float(row[0])]['error'] = float(row[1])
-                    thresholds_results[float(row[0])]['accuracy'] = float(row[2])
-                    thresholds_results[float(row[0])]['relevant_config'] = float(row[3])
-                    data = np.hstack((np.array([row[0], row[1], row[2], row[3]]).reshape(1, -1)))
+                    thresholds_results[float(row[0])]['relevant_config'] = float(row[1])
+                    thresholds_results[float(row[0])]['error'] = float(row[2])
+                    data = np.hstack((np.array([row[0], row[1], row[2]]).reshape(1, -1)))
                     out_df_scores = out_df_scores.append(pd.Series(data.reshape(-1), index=out_df_scores.columns),
                                                      ignore_index=True)
     for threshold_idx in np.arange(0, len(thresholds_neutral_to_test)):
         threshold = round(thresholds_neutral_to_test[threshold_idx], 3)
         if threshold not in thresholds_results:
             errors = []
-            threshold_sum_accuracy = 0
             threshold_sum_relevant_config = 0
+            confusion_matrix = np.zeros(shape=(11, 11))
             print("Execute experiments using threshold=" + str(threshold) + "...")
             for test_idx in np.arange(0, n_test_for_threshold):
                 print("---- Round "+str(test_idx+1)+"/"+str(n_test_for_threshold)+"... ----")
@@ -82,44 +84,36 @@ def compare_performance_different_thresholds():
                                                                n_kernels=n_kernels_GMM, verbose=False)
                 preliminary_clustering.execute_preliminary_clustering(threshold_neutral=threshold)
                 if len(preliminary_clustering.index_relevant_configurations) > 0:
-                    current_error, current_accuracy = generate_and_test_model(
+                    current_error, current_cm = generate_and_test_model(
                         threshold_neutral_configurations=threshold, preliminary_clustering=preliminary_clustering,
                         train_videos=train_videos, test_videos=test_videos)
                     errors.append(current_error)
-                    threshold_sum_accuracy += current_accuracy
                     threshold_sum_relevant_config += len(preliminary_clustering.index_relevant_configurations)
+                    confusion_matrix += current_cm
             if len(errors) == 0:
-                threshold_sum_error = threshold_sum_accuracy = "None"
+                threshold_sum_error = "None"
             else:
                 threshold_sum_error = round(sum(errors) / len(errors), 3)
-                threshold_sum_accuracy /= n_test_for_threshold
-                threshold_sum_accuracy = round(threshold_sum_accuracy, 2)
                 threshold_sum_relevant_config = int(threshold_sum_relevant_config / n_test_for_threshold)
                 thresholds_results[threshold] = {}
                 thresholds_results[threshold]["error"] = threshold_sum_error
-                thresholds_results[threshold]["accuracy"] = threshold_sum_accuracy
                 thresholds_results[threshold]["relevant_config"] = threshold_sum_relevant_config
-            data = np.hstack((np.array([threshold, threshold_sum_error, threshold_sum_accuracy, threshold_sum_relevant_config]).reshape(1, -1)))
+            data = np.hstack((np.array([threshold, threshold_sum_relevant_config, threshold_sum_error]).reshape(1, -1)))
             out_df_scores = out_df_scores.append(pd.Series(data.reshape(-1), index=out_df_scores.columns),ignore_index=True)
             out_df_scores.to_csv(path_result_thresholds, index=False, header=True)
+            path_current_cm = path_cm + "current_matrix_"+str(threshold)+".png"
+            plotMatrix(cm=confusion_matrix, labels=np.arange(0, 11), normalize=True, fname=path_current_cm)
     path_errors_graph = path_result + "errors_graph.png"
-    path_accuracy_graph = path_result + "accuracy_graph.png"
     plt.plot(thresholds_neutral_to_test, [thresholds_results[result]["error"] for result in thresholds_results], color="blue")
     plt.ylabel("Mean Absolute Error")
     plt.xlabel("Threshold")
     plt.title("Graphics Mean Absolute Errors")
     plt.savefig(path_errors_graph)
     plt.close()
-    plt.plot(thresholds_neutral_to_test, [thresholds_results[result]["accuracy"] for result in thresholds_results], color="green")
-    plt.ylabel("Accuracy")
-    plt.xlabel("Threshold")
-    plt.title("Graphics Accuracy")
-    plt.savefig(path_accuracy_graph)
-    plt.close()
 
 if __name__ == '__main__':
     assert n_kernels_GMM > 0
-    dir_paths = [path_result]
+    dir_paths = [path_result, path_cm]
     file_paths = [coord_df_path, seq_df_path]
     check_existing_paths(dir_paths=dir_paths, file_paths=file_paths)
     print("Execute tests with different thresholds for the neutral configurations (using "+str(n_kernels_GMM)+" kernels "
