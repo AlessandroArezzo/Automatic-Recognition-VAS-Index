@@ -45,7 +45,7 @@ When this has been done for each round, the threshold performance is calculated 
   </div>
 Furthermore, for each threshold a normalized confusion matrix is saved which allows to understand how the examples belonging to the various VAS index classes are predicted. Below is the example of the confusion matrix obtained with 15 kernels and a threshold equal to 0.35.
   <div align="center">
-    <img src="/data/test/15_kernels/exp_weight_samples/confusion_matrices/current_matrix_0.35.png" width="300px"</img> 
+    <img src="/data/test/15_kernels/exp_weight_samples/confusion_matrices/confusion_matrix_0.35.png" width="300px"</img> 
   </div>
 </li>
 <li><b>generate_model_predictor.py:</b> it allows to perform the training of the model with a number of kernels of the GMM and a threshold of the neutral configurations defined a priori in the configuration file. As for the test.py module, here too the dataset is divided into rounds and for each of them the model is trained using the round's training set and then evaluated on its validation set.
