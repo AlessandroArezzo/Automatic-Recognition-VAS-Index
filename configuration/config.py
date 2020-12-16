@@ -5,7 +5,7 @@ import numpy as np
 # PARAMETERS USED BY ALL SCRIPTS
 
 # Number of clusters of the GMM
-n_kernels_GMM = 10
+n_kernels_GMM = 20
 
 # Indexes of the landmarks to use for fitting GMM and description sequences
 selected_lndks_idx = [5, 11, 19, 24, 37, 41, 56, 58]
@@ -22,7 +22,7 @@ cross_val_protocol = "5-fold-cross-validation"
 # PARAMETERS USED BY THE SCRIPT generate_model_predictor.py
 
 # Threshold of the neutral configurations
-threshold_neutral = 0.45
+threshold_neutral = 0.2
 """ For example if the threshold is 0.3: all those configurations that occur within the sequences with vas equal to 0 
  with a frequency greater than 0.3 will be considered neutral.
   If threshold is None: all those configurations of the sequences with vas equal to 0 that
@@ -41,4 +41,4 @@ weighted_samples = True
 # PARAMETERS USED BY THE SCRIPT test.py
 
 # Thresholds to test
-thresholds_neutral_to_test = np.arange(0.05, 0.65, 0.05)
+thresholds_neutral_to_test = np.arange(0.05, 0.4, 0.05)

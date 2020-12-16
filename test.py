@@ -101,7 +101,7 @@ def compare_performance_different_thresholds():
             data = np.hstack((np.array([threshold, threshold_sum_relevant_config, threshold_sum_error]).reshape(1, -1)))
             out_df_scores = out_df_scores.append(pd.Series(data.reshape(-1), index=out_df_scores.columns),ignore_index=True)
             out_df_scores.to_csv(path_result_thresholds, index=False, header=True)
-            path_current_cm = path_cm + "current_matrix_"+str(threshold)+".png"
+            path_current_cm = path_cm + "confusion_matrix_"+str(threshold)+".png"
             plotMatrix(cm=confusion_matrix, labels=np.arange(0, 11), normalize=True, fname=path_current_cm)
     path_errors_graph = path_result + "errors_graph.png"
     plt.plot(thresholds_neutral_to_test, [thresholds_results[result]["error"] for result in thresholds_results], color="blue")
