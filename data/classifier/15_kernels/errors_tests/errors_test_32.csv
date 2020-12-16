@@ -1,0 +1,6 @@
+sequence_num,real_vas,vas_predicted,error
+160,2,3,1
+161,6,5,1
+162,2,4,2
+163,5,3,2
+164,1,6,5

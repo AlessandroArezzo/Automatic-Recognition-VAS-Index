@@ -79,8 +79,8 @@ if __name__ == '__main__':
             print("-- Train and save SVR model... --")
             model_svr.train_SVR(train_by_max_score=True, n_jobs=n_jobs)
             print("-- Calculate scores for trained SVR... --")
-            current_test_path_error = path_errors+"test_"+str(test_idx)+".csv"
-            current_path_cm = path_confusion_matrices + "test_" + str(test_idx) + ".png"
+            current_test_path_error = path_errors+"errors_test_"+str(test_idx)+".csv"
+            current_path_cm = path_confusion_matrices + "conf_matrix_test_" + str(test_idx) + ".png"
             current_error, current_confusion_matrix = model_svr.calculate_rate_model(path_scores_parameters=current_test_path_error,
                                                                                      path_scores_cm=current_path_cm)
             errors.append(current_error)
@@ -103,9 +103,9 @@ if __name__ == '__main__':
     print("Overall confusion matrix saved in png files on path '" + path_conf_matrix+"'")
     plt.bar(np.arange(1, n_test+1), errors, color="blue")
     plt.axhline(y=mean_error, xmin=0, xmax=n_test+1, color="red", label='Mean Absolute Error: '+str(mean_error))
-    plt.ylabel("Mean Absolute Error")
-    plt.xlabel("Num test")
-    plt.title("Graphics Mean Absolute Errors")
+    plt.ylabel("Average of the Mean Absolute Error")
+    plt.xlabel("Num round")
+    plt.title("Mean Absolute Errors")
     plt.legend()
     plt.savefig(path_errors)
     plt.close()
