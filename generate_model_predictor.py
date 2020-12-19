@@ -19,7 +19,7 @@ weighted_samples = config.weighted_samples
 selected_lndks_idx = config.selected_lndks_idx
 num_videos = 200
 cross_val_protocol = config.cross_val_protocol
-train_video_idx, test_video_idx = get_training_and_test_idx(num_videos, cross_val_protocol)
+train_video_idx, test_video_idx = get_training_and_test_idx(num_videos, cross_val_protocol, seq_df_path)
 # Preliminary clustering info and paths
 n_kernels_GMM = config.n_kernels_GMM
 threshold_neutral = config.threshold_neutral
