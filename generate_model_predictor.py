@@ -93,7 +93,7 @@ if __name__ == '__main__':
                                              ignore_index=True)
         out_df_scores.to_csv(path_results_csv, index=False, header=True)
         gmm_means = preliminary_clustering.gmm.means
-        columns = ["#center"] + ["ldk #"+str(ldks_idx) for ldks_idx in selected_lndks_idx]
+        columns = ["#kernel"] + ["ldk #"+str(ldks_idx) for ldks_idx in selected_lndks_idx]
         out_gmm_means = pd.DataFrame(columns=[columns])
         for kernel_idx in np.arange(len(gmm_means)):
             data_gmm_means = np.hstack((np.array([kernel_idx] + [center for center in gmm_means[kernel_idx]]).reshape(1, -1)))
