@@ -2,7 +2,6 @@ import pandas as pd
 import pickle
 import numpy as np
 from sklearn import svm
-from sklearn.metrics import confusion_matrix
 from sklearn.model_selection import GridSearchCV
 from utils import plotMatrix
 

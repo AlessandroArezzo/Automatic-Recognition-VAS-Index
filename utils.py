@@ -14,7 +14,7 @@ def check_existing_paths(dir_paths=[],file_paths=[]):
             print("Configuration error: file '" + file_path + "' not exist in project")
             exit(1)
 
-def get_subjects_seq_ids(seq_df_path):
+def get_subjects_seq_idx(seq_df_path):
     seq_df = pd.read_csv(seq_df_path)
     subjects_idxs = {}
     subject_count = 0
@@ -30,16 +30,15 @@ def get_subjects_seq_ids(seq_df_path):
 
 
 def get_training_and_test_idx(num_videos, cross_val_protocol, seq_df_path):
-    subject_idxs = get_subjects_seq_ids(seq_df_path)
+    subject_idxs = get_subjects_seq_idx(seq_df_path)
     num_subject = len(subject_idxs)
     all_training_idx = []
     all_test_idx = []
-    if cross_val_protocol == "Leave-One-Sequence-Out":
+    if cross_val_protocol == "Leave-One-Subject-Out":
         for subject_test in np.arange(num_subject):
             idxs_test = subject_idxs[subject_test]
             all_test_idx.append(np.array(idxs_test))
             all_training_idx.append(np.delete(np.arange(0,num_videos), idxs_test))
-
     elif cross_val_protocol == "5-fold-cross-validation":
         for subjects_test_offset in np.arange(0, num_subject, 5):
             idxs_test = []
@@ -48,6 +47,11 @@ def get_training_and_test_idx(num_videos, cross_val_protocol, seq_df_path):
             idxs_test = sum(idxs_test, [])
             all_test_idx.append(np.array(idxs_test))
             all_training_idx.append(np.delete(np.arange(0, num_videos), idxs_test))
+    elif cross_val_protocol == "Leave-One-Sequence-Out":
+        for video_idx in np.arange(0, num_videos):
+            all_test_idx.append(np.asarray(video_idx))
+            all_training_idx.append(np.delete(np.arange(0, num_videos), video_idx))
+
     return all_training_idx, all_test_idx
 
 def plotMatrix(cm, labels, fname, normalize=True):

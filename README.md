@@ -64,8 +64,8 @@ The parameters that can be specified are the following:
   <li><b>n_kernels_GMM:</b> it defines the number of kernels to be used for the Gaussian Mixture in the preliminary clustering phase. </li>
   <li><b>selected_lndks_idx:</b> it specifies the indexes of the landmarks to be considered during the procedure.</li>
   <li><b>n_jobs:</b> number of threads to use to perform SVR training.</li>
-  <li><b>cross_val_protocol:</b> type of protocol to be used to evaluate the performance of the models. The following two protocol values are permitted:
-  'Leave-One-Sequence-Out' and '5-fold-cross-validation'.</li>
+  <li><b>cross_val_protocol:</b> type of protocol to be used to evaluate the performance of the models. The following three protocol values are permitted:
+  'Leave-One-Subject-Out', '5-fold-cross-validation' and 'Leave-One-Sequence-Out'.</li>
   <li><b>weighted_samples:</b> it defines if the samples must be weighted for the SVR training (see Implementation for more details).</li>
   <li><b>threshold_neutral:</b> it defines the value to use as threshold for neutral configurations in the generate_model_predictor.py script.</li>
   <li><b>thresholds_neutral_to_test:</b> it defines the range of threshold values to be used in the test.py script.</li>
