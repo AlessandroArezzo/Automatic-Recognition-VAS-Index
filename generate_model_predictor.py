@@ -30,12 +30,13 @@ preliminary_clustering_path = "data/classifier/" + sub_directory + "/preliminary
 # Model classifier info and paths
 path_results = "data/classifier/" + sub_directory + "/"
 path_errors = path_results + "errors_tests/"
+path_gmm_means = path_results + "/gmm_means/"
 path_confusion_matrices = path_results + "confusion_matrices/"
 n_jobs = config.n_jobs
 
 if __name__ == '__main__':
     assert n_kernels_GMM > 0 and (threshold_neutral == None or 0 < threshold_neutral < 1)
-    dir_paths = [path_results, path_errors, path_confusion_matrices]
+    dir_paths = [path_results, path_errors, path_confusion_matrices, path_gmm_means]
     if save_histo_figures:
         dir_paths.append(path_histo_figures)
     file_paths = [coord_df_path, seq_df_path]
@@ -80,16 +81,25 @@ if __name__ == '__main__':
             model_svr.train_SVR(train_by_max_score=True, n_jobs=n_jobs)
             print("-- Calculate scores for trained SVR... --")
             current_test_path_error = path_errors+"errors_test_"+str(test_idx)+".csv"
+            current_path_gmm_means = path_gmm_means+"gmm_means_test_"+str(test_idx)+".csv"
             current_path_cm = path_confusion_matrices + "conf_matrix_test_" + str(test_idx) + ".png"
             current_error, current_confusion_matrix = model_svr.calculate_rate_model(path_scores_parameters=current_test_path_error,
                                                                                      path_scores_cm=current_path_cm)
             errors.append(current_error)
             print("-- Mean Absolute Error: " + str(current_error)+" --")
             confusion_matrix += current_confusion_matrix
-        data = np.hstack((np.array([test_idx+1, num_relevant_config, current_error]).reshape(1, -1)))
-        out_df_scores = out_df_scores.append(pd.Series(data.reshape(-1), index=out_df_scores.columns),
+        data_df_scores = np.hstack((np.array([test_idx+1, num_relevant_config, current_error]).reshape(1, -1)))
+        out_df_scores = out_df_scores.append(pd.Series(data_df_scores.reshape(-1), index=out_df_scores.columns),
                                              ignore_index=True)
         out_df_scores.to_csv(path_results_csv, index=False, header=True)
+        gmm_means = preliminary_clustering.gmm.means
+        columns = ["#center"] + ["ldk #"+str(ldks_idx) for ldks_idx in selected_lndks_idx]
+        out_gmm_means = pd.DataFrame(columns=[columns])
+        for kernel_idx in np.arange(len(gmm_means)):
+            data_gmm_means = np.hstack((np.array([kernel_idx] + [center for center in gmm_means[kernel_idx]]).reshape(1, -1)))
+            out_gmm_means = out_gmm_means.append(pd.Series(data_gmm_means.reshape(-1), index=out_gmm_means.columns),
+                                                 ignore_index=True)
+        out_gmm_means.to_csv(current_path_gmm_means, index=False, header=True)
     mean_error = sum(errors) / n_test
     mean_error = round(mean_error, 3)
     print("Mean Absolute Error: " + str(mean_error))
