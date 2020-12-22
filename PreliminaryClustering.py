@@ -64,7 +64,8 @@ class PreliminaryClustering:
     def __get_videos_frames_features(self):
         if self.verbose:
             print("---- Get features vector of the frame in dataset by velocities... ----")
-        total_num_frames = sum([video.shape[0] for video in self.velocities])
+        total_velocities = [self.velocities[i] for i in self.train_video_idx]
+        total_num_frames = sum([video.shape[0] for video in total_velocities])
         n_features_for_frame = self.velocities[0].shape[2]
         data_videos_to_fit = np.ndarray(shape=(1, total_num_frames, 1, n_features_for_frame))
         index_frame = 0
@@ -76,6 +77,7 @@ class PreliminaryClustering:
                     data_videos_to_fit[0][index_frame][0][index_feature] = current_frame_features[index_feature]
                 index_frame += 1
         return data_videos_to_fit
+
 
     """ Train Gaussian Mixture for process fisher vectors.
     Return the fitted GMM """
