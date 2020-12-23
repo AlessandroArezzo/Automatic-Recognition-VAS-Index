@@ -172,8 +172,10 @@ class PreliminaryClustering:
             print("---- Plot and save histograms... ----")
         for i in range(0, len(self.histograms_of_videos)):
             histo = self.histograms_of_videos[i]
-            plt.bar(self.index_neutral_configurations, histo[np.array(self.index_neutral_configurations)], color="blue")
-            plt.bar(self.index_relevant_configurations, histo[np.array(self.index_relevant_configurations)],color="red")
+            if len(self.index_neutral_configurations):
+                plt.bar(self.index_neutral_configurations, histo[np.array(self.index_neutral_configurations)], color="blue")
+            if len(self.index_relevant_configurations):
+                plt.bar(self.index_relevant_configurations, histo[np.array(self.index_relevant_configurations)],color="red")
             plt.title("VIDEO #" + str(i))
             plt.savefig(histo_figures_path + 'video-%03d.png' % i, dpi=200)
             plt.close()
