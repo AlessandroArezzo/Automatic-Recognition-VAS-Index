@@ -1,6 +1,7 @@
 import numpy as np
 import pandas as pd
 import matplotlib.pyplot as plt
+from sklearn import manifold
 
 from PreliminaryClustering import PreliminaryClustering
 from ModelSVR import ModelSVR
@@ -22,6 +23,7 @@ cross_val_protocol = config.cross_val_protocol
 train_video_idx, test_video_idx = get_training_and_test_idx(num_videos, cross_val_protocol, seq_df_path)
 # Preliminary clustering info and paths
 n_kernels_GMM = config.n_kernels_GMM
+covariance_type = config.covariance_type
 threshold_neutral = config.threshold_neutral
 save_histo_figures = config.save_histo_figures
 sub_directory = str(n_kernels_GMM) + "_kernels"
@@ -33,6 +35,7 @@ path_errors = path_results + "errors_tests/"
 path_gmm_means = path_results + "/gmm_means/"
 path_confusion_matrices = path_results + "confusion_matrices/"
 n_jobs = config.n_jobs
+model = manifold.MDS(n_components=2, metric=True, n_init=4, random_state=1, max_iter=200, dissimilarity='euclidean')
 
 if __name__ == '__main__':
     assert n_kernels_GMM > 0 and (threshold_neutral == None or 0 < threshold_neutral < 1)
@@ -49,9 +52,9 @@ if __name__ == '__main__':
     errors = []
     confusion_matrix = np.zeros(shape=(11, 11))
     if threshold_neutral == None:
-        print("Generate and test models with " + str(n_kernels_GMM) + " kernels GMM, default threshold and using " + cross_val_protocol)
+        print("Generate and test models with " + str(n_kernels_GMM) + " kernels GMM, "+covariance_type+" covariance, default threshold and using " + cross_val_protocol)
     else:
-        print("Generate and test models with "+str(n_kernels_GMM)+" kernels GMM, threshold = "+str(threshold_neutral)+ " and using "+cross_val_protocol )
+        print("Generate and test models with "+str(n_kernels_GMM)+" kernels GMM, "+covariance_type+" covariance, threshold = "+str(threshold_neutral)+ " and using "+cross_val_protocol )
     for test_idx in np.arange(0, n_test):
         print("- Round "+str(test_idx+1)+"/"+str(n_test)+" -")
         test_videos = test_video_idx[test_idx]
@@ -61,7 +64,8 @@ if __name__ == '__main__':
                                                        seq_df_path=seq_df_path, num_lndks=num_lndks,
                                                        selected_lndks_idx=selected_lndks_idx,
                                                        train_video_idx=train_videos,
-                                                       n_kernels=n_kernels_GMM)
+                                                       n_kernels=n_kernels_GMM,
+                                                       covariance_type=covariance_type,)
         if save_histo_figures == True:
             path_histo_current = path_histo_figures + "test_"+str(test_idx)+"_"
         preliminary_clustering.execute_preliminary_clustering(histo_figures_path=path_histo_current, threshold_neutral=threshold_neutral)
@@ -82,6 +86,7 @@ if __name__ == '__main__':
             print("-- Calculate scores for trained SVR... --")
             current_test_path_error = path_errors+"errors_test_"+str(test_idx)+".csv"
             current_path_gmm_means = path_gmm_means+"gmm_means_test_"+str(test_idx)+".csv"
+            current_path_img_clusters = path_gmm_means + "gmm_clusters_test_" + str(test_idx) + ".png"
             current_path_cm = path_confusion_matrices + "conf_matrix_test_" + str(test_idx) + ".png"
             current_error, current_confusion_matrix = model_svr.calculate_rate_model(path_scores_parameters=current_test_path_error,
                                                                                      path_scores_cm=current_path_cm)
@@ -100,6 +105,13 @@ if __name__ == '__main__':
             out_gmm_means = out_gmm_means.append(pd.Series(data_gmm_means.reshape(-1), index=out_gmm_means.columns),
                                                  ignore_index=True)
         out_gmm_means.to_csv(current_path_gmm_means, index=False, header=True)
+        data_transformed = model.fit_transform(gmm_means)
+        plt.plot(data_transformed[:, 0], data_transformed[:, 1], '.b')
+        for k in np.arange(data_transformed.shape[0]):
+            plt.annotate(str(k), (data_transformed[k, 0], data_transformed[k, 1]))
+        plt.title('Position of %d clusters remapped in 2D with MSD' % (data_transformed.shape[0]))
+        plt.savefig(current_path_img_clusters)
+        plt.close()
     mean_error = sum(errors) / n_test
     mean_error = round(mean_error, 3)
     print("Mean Absolute Error: " + str(mean_error))

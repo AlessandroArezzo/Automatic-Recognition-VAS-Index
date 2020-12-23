@@ -7,6 +7,10 @@ import numpy as np
 # Number of clusters of the GMM
 n_kernels_GMM = 15
 
+# Covariance type to use for the GMM fitting
+covariance_type = "full"
+"""covariance_type: 'diag' or 'full' """
+
 # Indexes of the landmarks to use for fitting GMM and description sequences
 selected_lndks_idx = [5, 11, 19, 24, 37, 41, 56, 58]
 #selected_lndks_idx = np.arange(66)
@@ -41,4 +45,4 @@ weighted_samples = True
 # PARAMETERS USED BY THE SCRIPT test.py
 
 # Thresholds to test
-thresholds_neutral_to_test = np.arange(0.05, 0.55, 0.05)
+thresholds_neutral_to_test = np.arange(0.2, 0.55, 0.05)

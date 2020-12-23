@@ -107,10 +107,10 @@ class ModelSVR:
 
 
     def calculate_rate_model(self, path_scores_parameters=None, path_scores_cm=None):
-        test_set_histo = np.asarray([self.desc_relevant_config_videos[i] for i in self.test_video_idx])
+        test_set_desc = np.asarray([self.desc_relevant_config_videos[i].flatten() for i in self.test_video_idx])
         test_set_vas = np.asarray([self.vas_sequences[i] for i in self.test_video_idx])
         sum_error = 0
-        num_test_videos = test_set_histo.shape[0]
+        num_test_videos = test_set_desc.shape[0]
         cm = np.zeros(shape=(11, 11))
         real_all_vas = []
         predicted_all_vas = []
@@ -119,7 +119,7 @@ class ModelSVR:
         for num_video in np.arange(num_test_videos):
             real_vas = test_set_vas[num_video]
             real_all_vas.append(real_vas)
-            vas_predicted = self.classifier.predict(test_set_histo[num_video].reshape(1,-1))[0]
+            vas_predicted = self.classifier.predict(test_set_desc[num_video].reshape(1,-1))[0]
             if vas_predicted < 0:
                 vas_predicted = 0
             elif vas_predicted > 10:

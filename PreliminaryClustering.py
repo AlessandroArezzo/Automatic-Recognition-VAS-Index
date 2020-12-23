@@ -3,6 +3,7 @@ import numpy as np
 import pandas as pd
 #from fishervector import FisherVectorGMM
 from fisherVector import FisherVectorGMM
+from sklearn.preprocessing import RobustScaler
 import matplotlib.pyplot as plt
 import matplotlib
 
@@ -13,7 +14,7 @@ matplotlib.use('Agg')
 
 class PreliminaryClustering:
     def __init__(self, coord_df_path, seq_df_path, num_lndks, selected_lndks_idx, train_video_idx, n_kernels,
-                 verbose=True):
+                 covariance_type='diag', verbose=True):
         self.coord_df_path = coord_df_path  # Path of csv file contained coordinates of the landmarks
         self.seq_df_path = seq_df_path  # Path of csv file contained sequences informations
         self.num_lndks = num_lndks  # Number of landmarks for each frame of the videos in the dataset
@@ -22,6 +23,7 @@ class PreliminaryClustering:
         self.n_kernels = n_kernels  # Number of kernels of the gmm to trained
         self.velocities = None
         self.gmm = None
+        self.covariance_type = covariance_type
         self.fisher_vectors = None
         self.histograms_of_videos = None
         self.index_relevant_configurations = None
@@ -56,6 +58,20 @@ class PreliminaryClustering:
             velocities.append(np.array(data_velocities))
         return velocities
 
+    def __scale_features(self):
+        if self.verbose:
+            print("---- Scaling the features... ----")
+        train_velocities = [self.velocities[i] for i in self.train_video_idx]
+        features_train_frames = np.array([feature_frame[0] for feature_video in train_velocities for feature_frame in feature_video])
+        transformer = RobustScaler().fit(features_train_frames)
+        features_all_frames = np.array([feature_frame[0] for feature_video in self.velocities for feature_frame in feature_video])
+        features_all_frames = transformer.transform(features_all_frames)
+        feat_count = 0
+        for video_idx,feature_video in enumerate(self.velocities):
+            for frame_idx, feature_frame_idx in enumerate(feature_video):
+                self.velocities[video_idx][frame_idx][0][:] = features_all_frames[feat_count]
+                feat_count += 1
+
     """ Prepare features for GMM training.
     All velocities of the sequences frame are inserted in a 4D array that contains all frames informations.
     Features of the frames of all videos are collected in the same sequence.
@@ -85,7 +101,7 @@ class PreliminaryClustering:
     def __generate_gmm(self, videos_features):
         if self.verbose:
             print("---- Generate GMM with " + str(self.n_kernels) + " kernels... ----")
-        return FisherVectorGMM(n_kernels=self.n_kernels).fit(videos_features, verbose=False)
+        return FisherVectorGMM(n_kernels=self.n_kernels, covariance_type=self.covariance_type).fit(videos_features, verbose=False)
 
     """ Calculate the fisher vectors of the first num test videos of the dataset.
     Return the calculated fisher vectors """
@@ -169,6 +185,7 @@ class PreliminaryClustering:
                                        histo_figures_path=None):
         if self.velocities == None:
             self.velocities = self.__get_velocities_frames()  # Velocities of landmarks for each frame of the videos content in the dataset
+            self.__scale_features()
         if self.gmm == None:
             data_video_to_fit = self.__get_videos_frames_features()  # Velocities of landmarks collected in the same 4D array
             self.gmm = self.__generate_gmm(

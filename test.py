@@ -24,6 +24,7 @@ cross_val_protocol = config.cross_val_protocol
 train_video_idx, test_video_idx = get_training_and_test_idx(num_videos, cross_val_protocol, seq_df_path)
 # Preliminary clustering info and paths
 n_kernels_GMM = config.n_kernels_GMM
+covariance_type = config.covariance_type
 thresholds_neutral_to_test = config.thresholds_neutral_to_test
 # Model classifier info and paths
 path_result = "data/test/" + str(n_kernels_GMM)+"_kernels/"
@@ -81,7 +82,9 @@ def compare_performance_different_thresholds():
                                                                seq_df_path=seq_df_path, num_lndks=num_lndks,
                                                                selected_lndks_idx=selected_lndks_idx,
                                                                train_video_idx=train_videos,
-                                                               n_kernels=n_kernels_GMM, verbose=False)
+                                                               n_kernels=n_kernels_GMM,
+                                                               covariance_type=covariance_type,
+                                                               verbose=False)
                 preliminary_clustering.execute_preliminary_clustering(threshold_neutral=threshold)
                 if len(preliminary_clustering.index_relevant_configurations) > 0:
                     current_error, current_cm = generate_and_test_model(
@@ -116,7 +119,7 @@ if __name__ == '__main__':
     dir_paths = [path_result, path_cm]
     file_paths = [coord_df_path, seq_df_path]
     check_existing_paths(dir_paths=dir_paths, file_paths=file_paths)
-    print("Execute tests with different thresholds for the neutral configurations (using "+str(n_kernels_GMM)+" kernels "
-    "and "+cross_val_protocol+")")
+    print("Execute tests with different thresholds for the neutral configurations (using "+str(n_kernels_GMM)+" kernels, "+
+    covariance_type+" covariance and "+cross_val_protocol+")")
     compare_performance_different_thresholds()
     print("End test with n_kernels= " + str(n_kernels_GMM) + ": results saved in a csv file with path '"+path_result+"'")
