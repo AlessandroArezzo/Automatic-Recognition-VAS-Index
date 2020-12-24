@@ -90,14 +90,14 @@ def compare_performance_different_thresholds():
                     current_error, current_cm = generate_and_test_model(
                         threshold_neutral_configurations=threshold, preliminary_clustering=preliminary_clustering,
                         train_videos=train_videos, test_videos=test_videos)
-                    errors.append(current_error)
                     threshold_sum_relevant_config += len(preliminary_clustering.index_relevant_configurations)
+                    errors.append(current_error)
                     confusion_matrix += current_cm
             if len(errors) == 0:
                 threshold_sum_error = "None"
             else:
                 threshold_sum_error = round(sum(errors) / len(errors), 3)
-                threshold_sum_relevant_config = int(threshold_sum_relevant_config / n_test_for_threshold)
+                threshold_sum_relevant_config = round(threshold_sum_relevant_config / n_test_for_threshold)
                 thresholds_results[threshold] = {}
                 thresholds_results[threshold]["error"] = threshold_sum_error
                 thresholds_results[threshold]["relevant_config"] = threshold_sum_relevant_config
