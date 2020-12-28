@@ -77,13 +77,13 @@ class ModelSVR:
             print("---- Find parameters that minimizes mean absolute error... ----")
         training_set_desc = np.asarray([self.desc_relevant_config_videos[i].flatten() for i in self.train_video_idx])
         training_set_vas = np.asarray([self.vas_sequences[i] for i in self.train_video_idx])
-        param = {'kernel': ['rbf'], 'C': np.arange(1, 1000, 50),
+        param = {'kernel': ['rbf'], 'C': np.arange(1, 100, 10),
                  'epsilon': [0.0001, 0.0005, 0.001, 0.005, 0.01, 0.05, 0.1, 0.5, 1, 5, 10],
                  'gamma': [0.0001, 0.001, 0.005, 0.1, 1, 3, 5]}
         grid_result = GridSearchCV(estimator=svm.SVR(), param_grid=param, scoring='neg_mean_absolute_error',
                              n_jobs=n_jobs).fit(training_set_desc, training_set_vas, sample_weight=self.sample_weights)
         best_params = grid_result.best_params_
-        return svm.SVR(kernel=best_params["kernel"], C=best_params["C"], epsilon=best_params["epsilon"],
+        return svm.SVR(kernel=best_params["kernel"], C=best_params["C"],
                           gamma=best_params["gamma"]).fit(training_set_desc, training_set_vas, sample_weight=self.sample_weights)
 
     def __init_data_sequences(self):

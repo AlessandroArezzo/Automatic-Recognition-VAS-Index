@@ -85,8 +85,6 @@ if __name__ == '__main__':
             model_svr.train_SVR(train_by_max_score=True, n_jobs=n_jobs)
             print("-- Calculate scores for trained SVR... --")
             current_test_path_error = path_errors+"errors_test_"+str(test_idx)+".csv"
-            current_path_gmm_means = path_gmm_means+"gmm_means_test_"+str(test_idx)+".csv"
-            current_path_img_clusters = path_gmm_means + "gmm_clusters_test_" + str(test_idx) + ".png"
             current_path_cm = path_confusion_matrices + "conf_matrix_test_" + str(test_idx) + ".png"
             current_error, current_confusion_matrix = model_svr.calculate_rate_model(path_scores_parameters=current_test_path_error,
                                                                                      path_scores_cm=current_path_cm)
@@ -104,9 +102,11 @@ if __name__ == '__main__':
             data_gmm_means = np.hstack((np.array([kernel_idx] + [center for center in gmm_means[kernel_idx]]).reshape(1, -1)))
             out_gmm_means = out_gmm_means.append(pd.Series(data_gmm_means.reshape(-1), index=out_gmm_means.columns),
                                                  ignore_index=True)
+        current_path_gmm_means = path_gmm_means + "gmm_means_test_" + str(test_idx) + ".csv"
         out_gmm_means.to_csv(current_path_gmm_means, index=False, header=True)
         data_transformed = model.fit_transform(gmm_means)
         plt.plot(data_transformed[:, 0], data_transformed[:, 1], '.b')
+        current_path_img_clusters = path_gmm_means + "gmm_clusters_test_" + str(test_idx) + ".png"
         for k in np.arange(data_transformed.shape[0]):
             plt.annotate(str(k), (data_transformed[k, 0], data_transformed[k, 1]))
         plt.title('Position of %d clusters remapped in 2D with MSD' % (data_transformed.shape[0]))
