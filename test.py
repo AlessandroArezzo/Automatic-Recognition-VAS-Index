@@ -45,7 +45,7 @@ def generate_and_test_model(threshold_neutral_configurations,
                          preliminary_clustering=preliminary_clustering, weighted_samples=weighted_samples,
                          verbose=False)
     model_svr.train_SVR(train_by_max_score=True, n_jobs=n_jobs)
-    return model_svr.calculate_rate_model()
+    return model_svr.evaluate_performance_model()
 
 """Compare the best scores obtained by varying the thresholds used for the neutral configurations in the 
 preliminary clustering. 
@@ -107,7 +107,7 @@ def compare_performance_different_thresholds():
             path_current_cm = path_cm + "confusion_matrix_"+str(threshold)+".png"
             plotMatrix(cm=confusion_matrix, labels=np.arange(0, 11), normalize=True, fname=path_current_cm)
     path_errors_graph = path_result + "errors_graph.png"
-    plt.plot(thresholds_neutral_to_test, [thresholds_results[result]["error"] for result in thresholds_results], color="blue")
+    plt.plot([threshold for threshold in thresholds_results.keys()], [thresholds_results[result]["error"] for result in thresholds_results], color="blue")
     plt.ylabel("Mean Absolute Error")
     plt.xlabel("Threshold")
     plt.title("Graphics Mean Absolute Errors")

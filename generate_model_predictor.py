@@ -86,7 +86,7 @@ if __name__ == '__main__':
             print("-- Calculate scores for trained SVR... --")
             current_test_path_error = path_errors+"errors_test_"+str(test_idx)+".csv"
             current_path_cm = path_confusion_matrices + "conf_matrix_test_" + str(test_idx) + ".png"
-            current_error, current_confusion_matrix = model_svr.calculate_rate_model(path_scores_parameters=current_test_path_error,
+            current_error, current_confusion_matrix = model_svr.evaluate_performance_model(path_scores_parameters=current_test_path_error,
                                                                                      path_scores_cm=current_path_cm)
             errors.append(current_error)
             print("-- Mean Absolute Error: " + str(current_error)+" --")
