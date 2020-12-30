@@ -66,13 +66,13 @@ class ModelSVR:
 
     """Train SVR using fisher vectors calculated and vas indexes readed of the sequences.
     Return the trained classifier """
-    def __train_SVR(self, regularization_parameter, gamma_parameter):
+    def __train(self, regularization_parameter, gamma_parameter):
         training_set_histo = np.asarray([self.desc_relevant_config_videos[i].flatten() for i in self.train_video_idx])
         training_set_vas = np.asarray([self.vas_sequences[i] for i in self.train_video_idx])
         model_svr = svm.SVR(C=regularization_parameter, gamma=gamma_parameter)
         return model_svr.fit(training_set_histo, training_set_vas)
 
-    def __train_SVR_maximizing_score(self, n_jobs):
+    def __train_maximizing_score(self, n_jobs):
         if self.verbose:
             print("---- Find parameters that minimizes mean absolute error... ----")
         training_set_desc = np.asarray([self.desc_relevant_config_videos[i].flatten() for i in self.train_video_idx])
@@ -94,9 +94,9 @@ class ModelSVR:
         if self.weighted_samples:
             self.__calculate_sample_weights()
         if train_by_max_score == True:
-            self.model = self.__train_SVR_maximizing_score(n_jobs=n_jobs)
+            self.model = self.__train_maximizing_score(n_jobs=n_jobs)
         else:
-            self.model = self.__train_SVR(regularization_parameter, gamma_parameter)
+            self.model = self.__train(regularization_parameter, gamma_parameter)
         if model_dump_path is not None:
             self.__dump_on_pickle(model_dump_path)
 

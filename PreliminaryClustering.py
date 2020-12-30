@@ -78,9 +78,9 @@ class PreliminaryClustering:
     Features of the frames of all videos are collected in the same sequence.
     Return a 4D array with velocities of the landmarks for each frame in the dataset """
 
-    def __get_videos_frames_features(self, velocities):
+    def __prepare_training_features(self, velocities):
         if self.verbose:
-            print("---- Get features vector of the frame in dataset by velocities... ----")
+            print("---- Preparing features vector of the frame in the training set by velocities... ----")
         train_velocities = [velocities[i] for i in self.train_video_idx]
         train_num_frames = sum([video.shape[0] for video in train_velocities])
         n_features_for_frame = len(self.selected_lndks_idx)
@@ -183,7 +183,7 @@ class PreliminaryClustering:
                                        histo_figures_path=None):
         velocities = self.__get_velocities_frames()  # Velocities of the landmarks for each frame of the videos content in the dataset
         velocities_scaled = self.__scale_features(velocities)  # Velocities scaled respect the training frames features
-        train_frames_features = self.__get_videos_frames_features(velocities_scaled)  # Velocities of landmarks collected in the same 4D array
+        train_frames_features = self.__prepare_training_features(velocities_scaled)  # Velocities of landmarks collected in the same 4D array
         self.gmm = self.__generate_gmm(train_frames_features)  # Gaussian mixture that performs the clustering of the configurations
         self.fisher_vectors = self.__calculate_FV(velocities_scaled)  # Fisher vectors for each frame of the videos contained in the dataset
         self.histograms_of_videos = self.__generate_histograms()  # Histograms of the configurations detected for each frame of the videos contained in the dataset
