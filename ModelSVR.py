@@ -1,9 +1,13 @@
+import matplotlib
+
 import pandas as pd
 import pickle
 import numpy as np
 from sklearn import svm
+from sklearn import manifold
 from sklearn.model_selection import GridSearchCV
 from utils import plotMatrix
+from matplotlib import pyplot as plt
 
 """Class that deals with training an SVR starting from the relevant configurations 
 to characterize the VAS index obtained during the preliminary clustering phase. """
@@ -17,14 +21,10 @@ class ModelSVR:
         self.vas_sequences = None  # VAS of the dataset sequences
         self.means_gmm = self.preliminary_clustering.gmm.means  # center og the GMM clusters
         self.desc_relevant_config_videos = None  # descriptor of the sequences contained in the dataset
-        self.model = None  # model SVR
+        self.model = None  # SVR model
         self.verbose = verbose # define if the output must be printed in the class
         self.weighted_samples = weighted_samples  # define if the samples must be weighted for the model fitting
         self.sample_weights = None  # sample weights (populated only if weighted_samples=True)
-        self.dict_relevant_config = {}
-        for idx, config in enumerate(self.preliminary_clustering.index_relevant_configurations):
-            mean_gmm = self.means_gmm[config]
-            self.dict_relevant_config[str(mean_gmm)] = idx
 
     """ Generate a descriptor for each sequences contained in the dataset"""
     def __generate_descriptors_relevant_configuration(self):
@@ -34,24 +34,19 @@ class ModelSVR:
         n_videos = len(fisher_vectors)
         num_relevant_config = len(self.preliminary_clustering.index_relevant_configurations)
         descriptors_of_videos = []
-        idx_relevant_frame_mean = self.preliminary_clustering.index_relevant_configurations
-        idx_relevant_frame_sd = [config + len(self.means_gmm) for config in self.preliminary_clustering.index_relevant_configurations]
-        means_gmm = self.means_gmm[self.preliminary_clustering.index_relevant_configurations]
-        idx_relevant_config_mean = [self.dict_relevant_config[str(mean_gmm)] for mean_gmm in means_gmm]
-        idx_relevant_config_sd = [self.dict_relevant_config[str(mean_gmm)] + num_relevant_config for mean_gmm in means_gmm]
+        idx_relevant_row = self.preliminary_clustering.index_relevant_configurations + \
+                                  [config + len(self.means_gmm) for config in self.preliminary_clustering.index_relevant_configurations]
         for index in range(0, n_videos):
             current_video_fv = fisher_vectors[index][0]
             video_descriptor = np.zeros(shape=(num_relevant_config * 2, current_video_fv.shape[2]))
             for index_frame in range(0, current_video_fv.shape[0]):
                 frame = current_video_fv[index_frame]
-                video_descriptor[idx_relevant_config_mean] += frame[idx_relevant_frame_mean]
-                video_descriptor[idx_relevant_config_sd] += frame[idx_relevant_frame_sd]
+                video_descriptor[:] += frame[idx_relevant_row]
             if sum(video_descriptor).any() != 0:
                 video_descriptor = np.sqrt(np.abs(video_descriptor)) * np.sign(video_descriptor)
                 video_descriptor = video_descriptor / np.linalg.norm(video_descriptor, axis=(0, 1))[None, None]
             descriptors_of_videos.append(video_descriptor)
         return descriptors_of_videos
-
 
     """Read vas index of all sequences from dataset. 
     Return a list contained the vas index of all sequences """
@@ -77,13 +72,13 @@ class ModelSVR:
             print("---- Find parameters that minimizes mean absolute error... ----")
         training_set_desc = np.asarray([self.desc_relevant_config_videos[i].flatten() for i in self.train_video_idx])
         training_set_vas = np.asarray([self.vas_sequences[i] for i in self.train_video_idx])
-        param = {'kernel': ['rbf'], 'C': np.arange(1, 100, 10),
-                 'epsilon': [0.0001, 0.0005, 0.001, 0.005, 0.01, 0.05, 0.1, 0.5, 1, 5, 10],
-                 'gamma': [0.0001, 0.001, 0.005, 0.1, 1, 3, 5]}
+        param = {'kernel': ['rbf'], 'C': np.arange(5, 100, 5),
+                 'epsilon': [0.00001, 0.00005, 0.0001, 0.0005, 0.001, 0.01, 0.1, 1],
+                 'gamma': [0.1, 1, 3, 5, 10, 15, 20]}
         grid_result = GridSearchCV(estimator=svm.SVR(), param_grid=param, scoring='neg_mean_absolute_error',
                              n_jobs=n_jobs).fit(training_set_desc, training_set_vas, sample_weight=self.sample_weights)
         best_params = grid_result.best_params_
-        return svm.SVR(kernel=best_params["kernel"], C=best_params["C"],
+        return svm.SVR(kernel=best_params["kernel"], C=best_params["C"], epsilon=best_params["epsilon"],
                           gamma=best_params["gamma"]).fit(training_set_desc, training_set_vas, sample_weight=self.sample_weights)
 
     """Performs the model training procedure based on what was done in the preliminary clustering phase"""
@@ -108,7 +103,7 @@ class ModelSVR:
             vas_predicted = 10
         return int(round(vas_predicted, 0))
 
-    def evaluate_performance_model(self, path_scores_parameters=None, path_scores_cm=None):
+    def evaluate_performance(self, path_scores_parameters=None, path_scores_cm=None):
         test_set_desc = np.asarray([self.desc_relevant_config_videos[i].flatten() for i in self.test_video_idx])
         test_set_vas = np.asarray([self.vas_sequences[i] for i in self.test_video_idx])
         num_test_videos = test_set_desc.shape[0]
@@ -138,6 +133,27 @@ class ModelSVR:
         mean_error = round(sum_error / num_test_videos, 3)
         return mean_error, confusion_matrix
 
+    def evaluate_performance_on_scaled_pain(self, path_scores_cm=None):
+        test_set_desc = np.asarray([self.desc_relevant_config_videos[i].flatten() for i in self.test_video_idx])
+        test_set_vas = np.asarray([self.vas_sequences[i] for i in self.test_video_idx])
+        num_test_videos = test_set_desc.shape[0]
+        #confusion_matrix = np.zeros(shape=(4, 4))
+        #dict_pain_level = {0: 0, 1: 1, 2:1, 3:1, 4:2, 5:2, 6:2, 7:3, 8:3, 9:3, 10:3}
+        #labels_cm = ["no pain", "weak pain", "medium pain", "severe pain"]
+        confusion_matrix = np.zeros(shape=(3, 3))
+        dict_pain_level = {0: 0, 1: 1, 2:1, 3:1, 4:2, 5:2, 6:2, 7:2, 8:2, 9:2, 10:2}
+        labels_cm = ["no pain", "weak pain", "severe pain"]
+        for num_video in np.arange(num_test_videos):
+            real_vas = test_set_vas[num_video]
+            real_level_idx = dict_pain_level[real_vas]
+            vas_predicted = self.__predict(test_set_desc[num_video].reshape(1,-1))
+            predicted_level_idx = dict_pain_level[vas_predicted]
+            confusion_matrix[real_level_idx][predicted_level_idx] += 1
+        if path_scores_cm is not None:
+            plotMatrix(cm=confusion_matrix, labels=labels_cm, normalize=True, fname=path_scores_cm)
+        return confusion_matrix
+
+
     def __calculate_sample_weights(self):
         vas_occ = {}
         vas_weights = {}
@@ -153,6 +169,29 @@ class ModelSVR:
         for idx, video_idx in enumerate(self.train_video_idx):
             self.sample_weights[idx] = vas_weights[self.vas_sequences[video_idx]]
 
+    def plot_SVR_prediction_on_train_data(self):
+        training_set_desc = np.asarray([self.desc_relevant_config_videos[i].flatten() for i in self.train_video_idx])
+        training_set_vas = np.asarray([self.vas_sequences[i] for i in self.train_video_idx])
+        test_set_desc = np.asarray([self.desc_relevant_config_videos[i].flatten() for i in self.test_video_idx])
+        test_set_vas = np.asarray([self.vas_sequences[i] for i in self.test_video_idx])
+        model = manifold.MDS(n_components=1, metric=True, n_init=4, random_state=1, max_iter=200,
+                             dissimilarity='euclidean')
+        training_set_desc_transformed = model.fit_transform(training_set_desc)
+        test_set_desc_transformed = model.fit_transform(test_set_desc)
+        plt.scatter(training_set_desc_transformed, training_set_vas, color="darkorange", label="data")
+        y_rbf = []
+        errors = []
+        for k in range(len(training_set_desc)):
+            y_rbf.append(self.__predict(training_set_desc[k].reshape(1, -1)))
+            errors.append([abs(y_rbf[k]-training_set_vas[k])])
+        #plt.scatter(training_set_desc_transformed, y_rbf, color="navy", lw=2, label="Model")
+        plt.scatter(test_set_desc_transformed, test_set_vas, color="navy", lw=2, label="Model")
+        plt.xlabel("data")
+        plt.ylabel("VAS")
+        plt.title("Support Vector Regression")
+        plt.legend()
+        #plt.show()
+        plt.savefig('data/figure_filename.jpg', dpi=300)
 
     def __dump_on_pickle(self, model_dump_path):
         with open(model_dump_path, 'wb') as handle:
