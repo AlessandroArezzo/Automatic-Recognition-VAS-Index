@@ -122,14 +122,14 @@ def compare_performance_with_different_thresholds():
     plt.plot([threshold for threshold in thresholds_results.keys()], [thresholds_results[result]["error"] for result in thresholds_results], color="blue")
     plt.ylabel("Mean Absolute Error")
     plt.xlabel("Threshold")
-    plt.title("Graphics Mean Absolute Errors with "+str(n_kernels_GMM)+" kernels GMM")
+    plt.title("Mean Absolute Errors with "+str(n_kernels_GMM)+" kernels")
     plt.savefig(path_errors_graph)
     plt.close()
     path_errors_graph = path_result + "relevant_config_graph.png"
     plt.plot([threshold for threshold in thresholds_results.keys()], [thresholds_results[result]["relevant_config"] for result in thresholds_results], color="blue")
     plt.ylabel("Number of relevant configurations")
     plt.xlabel("Threshold")
-    plt.title("Graphic number of relevant configurations with "+str(n_kernels_GMM)+" kernels")
+    plt.title("Number of relevant configurations with "+str(n_kernels_GMM)+" kernels")
     plt.savefig(path_errors_graph)
     plt.close()
 

@@ -59,7 +59,6 @@ if __name__ == '__main__':
     path_histo_current = None
     errors = []
     confusion_matrix = np.zeros(shape=(11, 11))
-    #confusion_matrix_pain_levels = np.zeros(shape=(4, 4))
     confusion_matrix_pain_levels = np.zeros(shape=(3, 3))
     if fit_by_bic:
         print("Generate and test models with fitting GMM by BIC using "+str(n_kernels_GMM)+" kernels, "+covariance_type+" covariance and "+cross_val_protocol )
@@ -144,7 +143,6 @@ if __name__ == '__main__':
 
     plotMatrix(cm=confusion_matrix, labels=np.arange(0, 11), normalize=True, fname=path_conf_matrix)
     print("Overall confusion matrix saved in png files on path '" + path_conf_matrix+"'")
-    #labels_cm = ["no pain", "weak pain", "medium pain", "severe pain"]
     labels_cm = ["no pain", "weak pain", "severe pain"]
     plotMatrix(cm=confusion_matrix_pain_levels, labels=labels_cm, normalize=True, fname=path_conf_matrix_pain_levels)
     print("Overall confusion matrix on pain level saved in png files on path '" + path_conf_matrix_pain_levels + "'")

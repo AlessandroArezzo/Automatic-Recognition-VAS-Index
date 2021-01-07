@@ -1,13 +1,9 @@
-import matplotlib
-
 import pandas as pd
 import pickle
 import numpy as np
 from sklearn import svm
-from sklearn import manifold
 from sklearn.model_selection import GridSearchCV
 from utils import plotMatrix
-from matplotlib import pyplot as plt
 
 """Class that deals with training an SVR starting from the relevant configurations 
 to characterize the VAS index obtained during the preliminary clustering phase. """
@@ -137,11 +133,8 @@ class ModelSVR:
         test_set_desc = np.asarray([self.desc_relevant_config_videos[i].flatten() for i in self.test_video_idx])
         test_set_vas = np.asarray([self.vas_sequences[i] for i in self.test_video_idx])
         num_test_videos = test_set_desc.shape[0]
-        #confusion_matrix = np.zeros(shape=(4, 4))
-        #dict_pain_level = {0: 0, 1: 1, 2:1, 3:1, 4:2, 5:2, 6:2, 7:3, 8:3, 9:3, 10:3}
-        #labels_cm = ["no pain", "weak pain", "medium pain", "severe pain"]
         confusion_matrix = np.zeros(shape=(3, 3))
-        dict_pain_level = {0: 0, 1: 1, 2:1, 3:1, 4:2, 5:2, 6:2, 7:2, 8:2, 9:2, 10:2}
+        dict_pain_level = {0: 0, 1: 1, 2: 1, 3: 1, 4: 2, 5: 2, 6: 2, 7: 2, 8: 2, 9: 2, 10: 2}
         labels_cm = ["no pain", "weak pain", "severe pain"]
         for num_video in np.arange(num_test_videos):
             real_vas = test_set_vas[num_video]
@@ -152,7 +145,6 @@ class ModelSVR:
         if path_scores_cm is not None:
             plotMatrix(cm=confusion_matrix, labels=labels_cm, normalize=True, fname=path_scores_cm)
         return confusion_matrix
-
 
     def __calculate_sample_weights(self):
         vas_occ = {}
@@ -169,34 +161,9 @@ class ModelSVR:
         for idx, video_idx in enumerate(self.train_video_idx):
             self.sample_weights[idx] = vas_weights[self.vas_sequences[video_idx]]
 
-    def plot_SVR_prediction_on_train_data(self):
-        training_set_desc = np.asarray([self.desc_relevant_config_videos[i].flatten() for i in self.train_video_idx])
-        training_set_vas = np.asarray([self.vas_sequences[i] for i in self.train_video_idx])
-        test_set_desc = np.asarray([self.desc_relevant_config_videos[i].flatten() for i in self.test_video_idx])
-        test_set_vas = np.asarray([self.vas_sequences[i] for i in self.test_video_idx])
-        model = manifold.MDS(n_components=1, metric=True, n_init=4, random_state=1, max_iter=200,
-                             dissimilarity='euclidean')
-        training_set_desc_transformed = model.fit_transform(training_set_desc)
-        test_set_desc_transformed = model.fit_transform(test_set_desc)
-        plt.scatter(training_set_desc_transformed, training_set_vas, color="darkorange", label="data")
-        y_rbf = []
-        errors = []
-        for k in range(len(training_set_desc)):
-            y_rbf.append(self.__predict(training_set_desc[k].reshape(1, -1)))
-            errors.append([abs(y_rbf[k]-training_set_vas[k])])
-        #plt.scatter(training_set_desc_transformed, y_rbf, color="navy", lw=2, label="Model")
-        plt.scatter(test_set_desc_transformed, test_set_vas, color="navy", lw=2, label="Model")
-        plt.xlabel("data")
-        plt.ylabel("VAS")
-        plt.title("Support Vector Regression")
-        plt.legend()
-        #plt.show()
-        plt.savefig('data/figure_filename.jpg', dpi=300)
-
     def __dump_on_pickle(self, model_dump_path):
         with open(model_dump_path, 'wb') as handle:
             pickle.dump(self, handle, protocol=pickle.HIGHEST_PROTOCOL)
-
 
     @staticmethod
     def load_model_from_pickle(pickle_path):
