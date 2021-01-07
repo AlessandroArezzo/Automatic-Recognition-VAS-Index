@@ -51,7 +51,7 @@ Furthermore, for each threshold a normalized confusion matrix is saved which all
 For each round, a relative confusion matrix and a csv file that show the predictions detected for each element of its test set are generated.
 At the end of the complete procedure, an overall confusion matrix (similar to the one shown in the image for the test.py script) and a bar graph showing the mean absolute errors detected at each round are saved. The graph obtained by running the script with 16 kernels and threshold equal to 0.3 is shown below:
   <div align="center">
-    <img src="/data/classifier/16_kernels/graphics_errors.png" width="300px"></img> 
+    <img src="/data/classifier/16_kernels/5_fold_cross_validation/graphics_errors.png" width="300px"></img> 
   </div>
 </li>
 </ul>
