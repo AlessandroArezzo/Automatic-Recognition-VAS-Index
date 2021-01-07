@@ -1,8 +1,7 @@
 import pickle
 import numpy as np
 import pandas as pd
-#from fishervector import FisherVectorGMM
-from fisherVector import FisherVectorGMM
+from fishervector import FisherVectorGMM
 from sklearn.preprocessing import RobustScaler
 import matplotlib.pyplot as plt
 import matplotlib
@@ -14,12 +13,14 @@ matplotlib.use('Agg')
 
 class PreliminaryClustering:
     def __init__(self, coord_df_path, seq_df_path, num_lndks, selected_lndks_idx, train_video_idx, n_kernels,
-                 covariance_type='diag', verbose=True):
+                 threshold_neutral, covariance_type='diag', verbose=True, fit_by_bic=False):
         self.coord_df_path = coord_df_path  # Path of csv file contained coordinates of the landmarks
         self.seq_df_path = seq_df_path  # Path of csv file contained sequences informations
         self.num_lndks = num_lndks  # Number of landmarks for each frame of the videos in the dataset
         self.selected_lndks_idx = selected_lndks_idx  # Indexes of the landmarks to considered to the clustering
         self.train_video_idx = train_video_idx  # Indexes of the videos to use for training
+        self.fit_by_bic = fit_by_bic  # Define if the GMM must be fitted using fit by bic
+        self.threshold_neutral = threshold_neutral  # Thresholds to use fo extraction of the neutral configurations
         self.n_kernels = n_kernels  # Number of kernels of the gmm to trained
         self.covariance_type = covariance_type  # type of the covariance matrix to use for the GMM fitting
         self.verbose = verbose  # define if the output must be printed in the class
@@ -52,7 +53,7 @@ class PreliminaryClustering:
                                          lndks_centered[1:lndks_centered.shape[0], self.num_lndks:], 2),
                                 0.5)
             data_velocities = []
-            for k in np.arange(lndk_vel.shape[0]):
+            for k in np.arange(1, lndk_vel.shape[0]):
                 data_velocities.append(np.array(lndk_vel[k, self.selected_lndks_idx]))
             velocities.append(np.array(data_velocities))
         return velocities
@@ -99,9 +100,21 @@ class PreliminaryClustering:
     Return the fitted GMM """
 
     def __generate_gmm(self, train_frames_features):
-        if self.verbose:
-            print("---- Generate GMM with " + str(self.n_kernels) + " kernels... ----")
-        return FisherVectorGMM(n_kernels=self.n_kernels, covariance_type=self.covariance_type).fit(train_frames_features, verbose=False)
+        if self.fit_by_bic:
+            if self.verbose:
+                print("---- Generate GMM with fitting by BIC... ----")
+            gmm = FisherVectorGMM(covariance_type=self.covariance_type).fit_by_bic(
+                X=train_frames_features, choices_n_kernels=self.n_kernels, verbose=self.verbose)
+            n_kernels_current_GMM = len(gmm.means)
+            if self.fit_by_bic and isinstance(self.threshold_neutral, list):
+                self.threshold_neutral = self.threshold_neutral[self.n_kernels.index(n_kernels_current_GMM)]
+            self.n_kernels = n_kernels_current_GMM
+            return gmm
+        else:
+            if self.verbose:
+                print("---- Generate GMM with " + str(self.n_kernels) + " kernels... ----")
+            return FisherVectorGMM(n_kernels=self.n_kernels, covariance_type=self.covariance_type).fit(
+                X=train_frames_features, verbose=False)
 
     """ Calculate the fisher vectors of the first num test videos of the dataset.
     Return the calculated fisher vectors """
@@ -139,16 +152,14 @@ class PreliminaryClustering:
     Return two lists containing respectively the indices of the relevant and neutral configurations to classify 
     the vas index. """
 
-    def __extract_relevant_and_neutral_configurations(self, threshold_neutral):
+    def __extract_relevant_and_neutral_configurations(self):
         if self.verbose:
             output = "---- Extracts relevant and neutral configurations analyzing train sequences"
-            if threshold_neutral != None:
+            if self.threshold_neutral != None:
                 output += " (with threshold=" + str(
-                threshold_neutral) +")"
+                    self.threshold_neutral) +")"
             output += "... ----"
             print(output)
-        if threshold_neutral == None:
-            threshold_neutral = max([histo[-1] for histo in self.histograms_of_videos])/3
         seq_df = pd.read_csv(self.seq_df_path)
         index_neutral_configurations = []
         for seq_num in self.train_video_idx:
@@ -156,7 +167,7 @@ class PreliminaryClustering:
             if vas == 0:
                 hist = self.histograms_of_videos[seq_num]
                 for j in np.arange(self.n_kernels):
-                    if hist[j] > threshold_neutral and j not in index_neutral_configurations:
+                    if hist[j] > self.threshold_neutral and j not in index_neutral_configurations:
                         index_neutral_configurations.append(j)
         index_relevant_configurations = [x for x in np.arange(self.n_kernels) if x not in index_neutral_configurations]
         return index_relevant_configurations, index_neutral_configurations
@@ -179,7 +190,7 @@ class PreliminaryClustering:
     """ Execute preliminary clustering using the parameters passed to class constructor.
     If plot_and_save_histo is setted on True value the figures of histograms of videos is saved in files """
 
-    def execute_preliminary_clustering(self, threshold_neutral=None, preliminary_clustering_dump_path=None,
+    def execute_preliminary_clustering(self, preliminary_clustering_dump_path=None,
                                        histo_figures_path=None):
         velocities = self.__get_velocities_frames()  # Velocities of the landmarks for each frame of the videos content in the dataset
         velocities_scaled = self.__scale_features(velocities)  # Velocities scaled respect the training frames features
@@ -188,7 +199,7 @@ class PreliminaryClustering:
         self.fisher_vectors = self.__calculate_FV(velocities_scaled)  # Fisher vectors for each frame of the videos contained in the dataset
         self.histograms_of_videos = self.__generate_histograms()  # Histograms of the configurations detected for each frame of the videos contained in the dataset
         self.index_relevant_configurations, self.index_neutral_configurations = \
-            self.__extract_relevant_and_neutral_configurations(threshold_neutral)  # Relevant and neutral configurations for the classification of the vas index
+            self.__extract_relevant_and_neutral_configurations()  # Relevant and neutral configurations for the classification of the vas index
         if histo_figures_path is not None:
             self.__plot_and_save_histograms(histo_figures_path)
         if preliminary_clustering_dump_path is not None:

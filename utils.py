@@ -42,14 +42,17 @@ def get_training_and_test_idx(num_videos, cross_val_protocol, seq_df_path):
     elif cross_val_protocol == "5-fold-cross-validation":
         for subjects_test_offset in np.arange(0, num_subject, 5):
             idxs_test = []
-            for subject_test in np.arange(subjects_test_offset, subjects_test_offset + 5):
+            subjects_offset = subjects_test_offset + 5
+            if subjects_offset >= len(subject_idxs):
+                subjects_offset = len(subject_idxs)
+            for subject_test in np.arange(subjects_test_offset, subjects_offset):
                 idxs_test.append(subject_idxs[subject_test])
             idxs_test = sum(idxs_test, [])
             all_test_idx.append(np.array(idxs_test))
             all_training_idx.append(np.delete(np.arange(0, num_videos), idxs_test))
     elif cross_val_protocol == "Leave-One-Sequence-Out":
         for video_idx in np.arange(0, num_videos):
-            all_test_idx.append(np.asarray(video_idx))
+            all_test_idx.append(np.asarray([video_idx]))
             all_training_idx.append(np.delete(np.arange(0, num_videos), video_idx))
 
     return all_training_idx, all_test_idx
