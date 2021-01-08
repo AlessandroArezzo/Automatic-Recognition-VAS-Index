@@ -5,9 +5,10 @@ from sklearn import svm
 from sklearn.model_selection import GridSearchCV
 from utils import plot_matrix
 
-"""Class that deals with training an SVR starting from the relevant configurations 
-to characterize the VAS index obtained during the preliminary clustering phase. """
+
 class ModelSVR:
+    """Class that deals with training an SVR starting from the relevant configurations
+    to characterize the VAS index obtained during the preliminary clustering phase. """
 
     def __init__(self, seq_df_path, train_video_idx, test_video_idx, preliminary_clustering, weighted_samples=False, verbose=True):
         self.seq_df_path = seq_df_path  # Path of csv file contained sequences info
@@ -22,8 +23,11 @@ class ModelSVR:
         self.weighted_samples = weighted_samples  # define if the samples must be weighted for the model fitting
         self.sample_weights = None  # sample weights (populated only if weighted_samples=True)
 
-    """ Generate a descriptor for each sequences contained in the dataset"""
     def __generate_descriptors_relevant_configuration(self):
+        """
+        Generate a descriptor for each sequences contained in the dataset
+        """
+
         if self.verbose:
             print("---- Generate descriptors of video sequences... ----")
         fisher_vectors = self.preliminary_clustering.fisher_vectors
@@ -55,9 +59,13 @@ class ModelSVR:
             vas_sequences.append(seq_df.iloc[num_video][1])
         return vas_sequences
 
-    """Train SVR using fisher vectors calculated and vas indexes readed of the sequences.
-    Return the trained classifier """
+
     def __train(self, regularization_parameter, gamma_parameter):
+        """
+        Train SVR using fisher vectors calculated and vas indexes readed of the sequences.
+        Return the trained classifier
+        """
+
         training_set_histo = np.asarray([self.desc_relevant_config_videos[i].flatten() for i in self.train_video_idx])
         training_set_vas = np.asarray([self.vas_sequences[i] for i in self.train_video_idx])
         model_svr = svm.SVR(C=regularization_parameter, gamma=gamma_parameter)
@@ -77,9 +85,12 @@ class ModelSVR:
         return svm.SVR(kernel=best_params["kernel"], C=best_params["C"], epsilon=best_params["epsilon"],
                           gamma=best_params["gamma"]).fit(training_set_desc, training_set_vas, sample_weight=self.sample_weights)
 
-    """Performs the model training procedure based on what was done in the preliminary clustering phase"""
     def train_SVR(self, regularization_parameter=1,
                     gamma_parameter='scale', train_by_max_score=True, model_dump_path=None, n_jobs=1):
+        """
+        Performs the model training procedure based on what was done in the preliminary clustering phase
+        """
+
         self.desc_relevant_config_videos = self.__generate_descriptors_relevant_configuration()
         self.vas_sequences = self.__read_vas_videos()
         if self.weighted_samples:

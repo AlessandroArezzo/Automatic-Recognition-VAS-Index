@@ -6,6 +6,7 @@ from PreliminaryClustering import PreliminaryClustering
 from ModelSVR import ModelSVR
 from configuration import config
 from utils import get_training_and_test_idx, check_existing_paths, plot_matrix, save_data_on_csv, save_GMM_mean_info
+
 """Script that allows you to train an SVR using a given number of kernels for preliminary 
 clustering."""
 

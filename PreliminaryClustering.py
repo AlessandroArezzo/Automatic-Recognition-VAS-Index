@@ -8,10 +8,11 @@ import matplotlib
 
 matplotlib.use('Agg')
 
-"""Class that is responsible for obtaining the relevant configurations for the classification of the VAS index. """
 
 
 class PreliminaryClustering:
+    """Class that is responsible for obtaining the relevant configurations for the classification of the VAS index. """
+
     def __init__(self, coord_df_path, seq_df_path, num_lndks, selected_lndks_idx, train_video_idx, n_kernels,
                  threshold_neutral, covariance_type='diag', verbose=True, fit_by_bic=False):
         self.coord_df_path = coord_df_path  # Path of csv file contained coordinates of the landmarks
@@ -30,10 +31,12 @@ class PreliminaryClustering:
         self.index_relevant_configurations = None  # indexes of the clusters to considered as relevant
         self.index_neutral_configurations = None  # indexes of the clusters to considered as neutral (not to use for VAS classification)
 
-    """ Extract velocities of landmarks video sequences in dataset. 
-    Return a list of 2D array with velocities of the landmarks for each frame """
-
     def __get_velocities_frames(self):
+        """
+        Extract velocities of landmarks video sequences in dataset.
+        Return a list of 2D array with velocities of the landmarks for each frame
+        """
+
         if self.verbose:
             print("---- Calculating velocities of the frames in dataset... ----")
         coord_df = pd.read_csv(self.coord_df_path)
@@ -58,9 +61,11 @@ class PreliminaryClustering:
             velocities.append(np.array(data_velocities))
         return velocities
 
-    """ Scaling the features using RobustScaler. It makes features more robust than the outliers."""
-
     def __scale_features(self, velocities):
+        """
+        Scaling the features using RobustScaler. It makes features more robust than the outliers
+        """
+
         if self.verbose:
             print("---- Scaling the features... ----")
         train_velocities = [velocities[i] for i in self.train_video_idx]
@@ -74,12 +79,14 @@ class PreliminaryClustering:
                 feat_count += 1
         return velocities
 
-    """ Prepare features for GMM training.
-    All velocities of the sequences frame are inserted in a 4D array that contains all frames informations.
-    Features of the frames of all videos are collected in the same sequence.
-    Return a 4D array with velocities of the landmarks for each frame in the dataset """
-
     def __prepare_training_features(self, velocities):
+        """
+        Prepare features for GMM training.
+        All velocities of the sequences frame are inserted in a 4D array that contains all frames informations.
+        Features of the frames of all videos are collected in the same sequence.
+        Return a 4D array with velocities of the landmarks for each frame in the dataset
+        """
+
         if self.verbose:
             print("---- Preparing features vector of the frame in the training set by velocities... ----")
         train_velocities = [velocities[i] for i in self.train_video_idx]
@@ -95,11 +102,12 @@ class PreliminaryClustering:
                 index_frame += 1
         return train_frames_features
 
-
-    """ Train Gaussian Mixture for process fisher vectors.
-    Return the fitted GMM """
-
     def __generate_gmm(self, train_frames_features):
+        """
+        Train Gaussian Mixture for process fisher vectors.
+        Return the fitted GMM
+        """
+
         if self.fit_by_bic:
             if self.verbose:
                 print("---- Generate GMM with fitting by BIC... ----")
@@ -116,10 +124,12 @@ class PreliminaryClustering:
             return FisherVectorGMM(n_kernels=self.n_kernels, covariance_type=self.covariance_type).fit(
                 X=train_frames_features, verbose=False)
 
-    """ Calculate the fisher vectors of the first num test videos of the dataset.
-    Return the calculated fisher vectors """
-
     def __calculate_FV(self, velocities):
+        """
+        Calculate the fisher vectors of the first num test videos of the dataset.
+        Return the calculated fisher vectors
+        """
+
         if self.verbose:
             print("---- Calculate fisher vectors of video sequences in dataset... ----")
         n_features_for_frame = len(self.selected_lndks_idx)
@@ -129,11 +139,13 @@ class PreliminaryClustering:
             fisher_vectors.append(fv)
         return fisher_vectors
 
-    """ Calculate the histograms of the videos starting from the fisher vectors of the frames.
-    Uses the clustering method to establish the cluster of a sequence by his fisher vector. 
-    Return a list with histograms of videos """
-
     def __generate_histograms(self):
+        """
+        Calculate the histograms of the videos starting from the fisher vectors of the frames.
+        Uses the clustering method to establish the cluster of a sequence by his fisher vector.
+        Return a list with histograms of videos
+        """
+
         if self.verbose:
             print("---- Generate histograms of video sequences... ----")
         histograms_of_videos = []
@@ -148,11 +160,13 @@ class PreliminaryClustering:
             histograms_of_videos.append(video_histogram)
         return histograms_of_videos
 
-    """ Apply a strategy to derive the relevant and neutral configurations for classify the VAS index using histograms.
-    Return two lists containing respectively the indices of the relevant and neutral configurations to classify 
-    the vas index. """
-
     def __extract_relevant_and_neutral_configurations(self):
+        """
+        Apply a strategy to derive the relevant and neutral configurations for classify the VAS index using histograms.
+        Return two lists containing respectively the indices of the relevant and neutral configurations to classify
+        the vas index
+        """
+
         if self.verbose:
             output = "---- Extracts relevant and neutral configurations analyzing train sequences"
             if self.threshold_neutral != None:
@@ -172,10 +186,12 @@ class PreliminaryClustering:
         index_relevant_configurations = [x for x in np.arange(self.n_kernels) if x not in index_neutral_configurations]
         return index_relevant_configurations, index_neutral_configurations
 
-    """ Plot and save histograms by distinguishing the color of the representations of the relevant configurations
-    from the neutral ones """
-
     def __plot_and_save_histograms(self, histo_figures_path):
+        """
+        Plot and save histograms by distinguishing the color of the representations of the relevant configurations
+        from the neutral ones
+        """
+
         if self.verbose:
             print("---- Plot and save histograms... ----")
         for idx, histo in enumerate(self.histograms_of_videos):
@@ -187,19 +203,21 @@ class PreliminaryClustering:
             plt.savefig(histo_figures_path + 'video-%03d.png' % idx, dpi=200)
             plt.close()
 
-    """ Execute preliminary clustering using the parameters passed to class constructor.
-    If plot_and_save_histo is setted on True value the figures of histograms of videos is saved in files """
-
     def execute_preliminary_clustering(self, preliminary_clustering_dump_path=None,
                                        histo_figures_path=None):
-        velocities = self.__get_velocities_frames()  # Velocities of the landmarks for each frame of the videos content in the dataset
-        velocities_scaled = self.__scale_features(velocities)  # Velocities scaled respect the training frames features
-        train_frames_features = self.__prepare_training_features(velocities_scaled)  # Velocities of landmarks collected in the same 4D array
-        self.gmm = self.__generate_gmm(train_frames_features)  # Gaussian mixture that performs the clustering of the configurations
-        self.fisher_vectors = self.__calculate_FV(velocities_scaled)  # Fisher vectors for each frame of the videos contained in the dataset
-        self.histograms_of_videos = self.__generate_histograms()  # Histograms of the configurations detected for each frame of the videos contained in the dataset
+        """
+        Execute preliminary clustering using the parameters passed to class constructor.
+        If plot_and_save_histo is setted on True value the figures of histograms of videos is saved in files
+        """
+
+        velocities = self.__get_velocities_frames()
+        velocities_scaled = self.__scale_features(velocities)
+        train_frames_features = self.__prepare_training_features(velocities_scaled)
+        self.gmm = self.__generate_gmm(train_frames_features)
+        self.fisher_vectors = self.__calculate_FV(velocities_scaled)
+        self.histograms_of_videos = self.__generate_histograms()
         self.index_relevant_configurations, self.index_neutral_configurations = \
-            self.__extract_relevant_and_neutral_configurations()  # Relevant and neutral configurations for the classification of the vas index
+            self.__extract_relevant_and_neutral_configurations()
         if histo_figures_path is not None:
             self.__plot_and_save_histograms(histo_figures_path)
         if preliminary_clustering_dump_path is not None:
