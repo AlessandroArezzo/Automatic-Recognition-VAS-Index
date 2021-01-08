@@ -5,10 +5,10 @@ import numpy as np
 # PARAMETERS USED BY ALL SCRIPTS
 
 # Define if the GMM must be fitted minimized BIC from more than one kernels number
-fit_by_bic = True
+fit_by_bic = False
 
 # Number of clusters of the GMM (if fit_by_bic = True set a list of number of kernels, otherwise set an integer value)
-n_kernels_GMM = [26, 28, 32]
+n_kernels_GMM = 16
 
 # Covariance type to use for the GMM fitting
 covariance_type = "full"
@@ -30,7 +30,7 @@ cross_val_protocol = "5-fold-cross-validation"
 
 # Threshold of the neutral configurations (if fit_by_bic = True set a list of thresholds of the same length defined
 # in the n_kernels_GMM list, otherwise set a float value between 0 and 1)
-threshold_neutral = [0.26, 0.15, 0.08]
+threshold_neutral = 0.3
 """ For example if the threshold is 0.3: all those configurations that occur within the sequences with vas equal to 0 
  with a frequency greater than 0.3 will be considered neutral. """
 
@@ -47,4 +47,4 @@ weighted_samples = True
 # PARAMETERS USED BY THE SCRIPT test.py
 
 # Thresholds to test
-thresholds_neutral_to_test = np.arange(0.1, 0.2, 0.05)
+thresholds_neutral_to_test = np.arange(0.1, 0.6, 0.05)
