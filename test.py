@@ -101,7 +101,7 @@ def compare_performance_with_different_thresholds():
                 thresholds_results[threshold] = {}
                 thresholds_results[threshold]["error"] = threshold_sum_error
                 thresholds_results[threshold]["relevant_config"] = threshold_sum_relevant_config
-                
+
             out_df_scores = save_data_on_csv([threshold, threshold_sum_relevant_config, threshold_sum_error],
                                              out_df_scores, path_result_thresholds)
             path_current_cm = path_cm + "confusion_matrix_"+str(threshold)+".png"
