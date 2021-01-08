@@ -5,9 +5,7 @@ import matplotlib.pyplot as plt
 from PreliminaryClustering import PreliminaryClustering
 from ModelSVR import ModelSVR
 from configuration import config
-from utils import get_training_and_test_idx, check_existing_paths, plotMatrix
-import csv
-import os
+from utils import get_training_and_test_idx, check_existing_paths, plot_matrix, save_data_on_csv, read_dict_from_csv, plot_graph
 
 """Script that allows you to train an SVR using a given number of kernels for preliminary 
 clustering."""
@@ -65,18 +63,8 @@ Save the results in a csv file containing the comparison of the best scores foun
 def compare_performance_with_different_thresholds():
     out_df_scores = pd.DataFrame(columns=['Thresholds Neutral Configurations', '#clusters', 'Mean Absolute Error'])
     n_test_for_threshold = len(train_video_idx)
-    thresholds_results = {}
-    if os.path.isfile(path_result_thresholds):
-        with open(path_result_thresholds, 'r') as thresholds_rslt_file:
-            reader = csv.reader(thresholds_rslt_file)
-            for idx, row in enumerate(reader):
-                if idx > 0:
-                    thresholds_results[float(row[0])] = {}
-                    thresholds_results[float(row[0])]['relevant_config'] = float(row[1])
-                    thresholds_results[float(row[0])]['error'] = float(row[2])
-                    data = np.hstack((np.array([row[0], row[1], row[2]]).reshape(1, -1)))
-                    out_df_scores = out_df_scores.append(pd.Series(data.reshape(-1), index=out_df_scores.columns),
-                                                     ignore_index=True)
+    thresholds_results = read_dict_from_csv(path_result_thresholds, out_df_scores, ['relevant_config', 'error'])
+
     for threshold_idx in np.arange(0, len(thresholds_neutral_to_test)):
         threshold = round(thresholds_neutral_to_test[threshold_idx], 3)
         if threshold not in thresholds_results:
@@ -113,25 +101,23 @@ def compare_performance_with_different_thresholds():
                 thresholds_results[threshold] = {}
                 thresholds_results[threshold]["error"] = threshold_sum_error
                 thresholds_results[threshold]["relevant_config"] = threshold_sum_relevant_config
-            data = np.hstack((np.array([threshold, threshold_sum_relevant_config, threshold_sum_error]).reshape(1, -1)))
-            out_df_scores = out_df_scores.append(pd.Series(data.reshape(-1), index=out_df_scores.columns),ignore_index=True)
-            out_df_scores.to_csv(path_result_thresholds, index=False, header=True)
+                
+            out_df_scores = save_data_on_csv([threshold, threshold_sum_relevant_config, threshold_sum_error],
+                                             out_df_scores, path_result_thresholds)
             path_current_cm = path_cm + "confusion_matrix_"+str(threshold)+".png"
-            plotMatrix(cm=confusion_matrix, labels=np.arange(0, 11), normalize=True, fname=path_current_cm)
-    path_errors_graph = path_result + "errors_graph.png"
-    plt.plot([threshold for threshold in thresholds_results.keys()], [thresholds_results[result]["error"] for result in thresholds_results], color="blue")
-    plt.ylabel("Mean Absolute Error")
-    plt.xlabel("Threshold")
-    plt.title("Mean Absolute Errors with "+str(n_kernels_GMM)+" kernels")
-    plt.savefig(path_errors_graph)
-    plt.close()
-    path_errors_graph = path_result + "relevant_config_graph.png"
-    plt.plot([threshold for threshold in thresholds_results.keys()], [thresholds_results[result]["relevant_config"] for result in thresholds_results], color="blue")
-    plt.ylabel("Number of relevant configurations")
-    plt.xlabel("Threshold")
-    plt.title("Number of relevant configurations with "+str(n_kernels_GMM)+" kernels")
-    plt.savefig(path_errors_graph)
-    plt.close()
+            plot_matrix(cm=confusion_matrix, labels=np.arange(0, 11), normalize=True, fname=path_current_cm)
+
+    plot_graph(x=[threshold for threshold in thresholds_results.keys()],
+               y=[thresholds_results[result]["error"] for result in thresholds_results],
+               x_label="Threshold", y_label= "Mean Absolute Error",
+               title="Mean Absolute Errors with "+str(n_kernels_GMM)+" kernels",
+               file_path=path_result + "errors_graph.png")
+
+    plot_graph(x=[threshold for threshold in thresholds_results.keys()],
+               y=[thresholds_results[result]["relevant_config"] for result in thresholds_results],
+               x_label="Threshold", y_label="Number of relevant configurations",
+               title="Number of relevant configurations with "+str(n_kernels_GMM)+" kernels",
+               file_path=path_result + "relevant_config_graph.png")
 
 def update_results_by_BIC(dict_results_kernels):
     for n_kernels in dict_results_kernels:
@@ -154,13 +140,11 @@ def update_results_by_BIC(dict_results_kernels):
 def plot_results_graph_by_BIC(dict_results_kernels):
     for n_kernels in dict_results_kernels:
         path_results_graph = path_result + str(n_kernels) + "_kernels/results_graph.png"
-        plt.plot([threshold for threshold in dict_results_kernels[n_kernels]],
-                 [dict_results_kernels[n_kernels][threshold]["error"] for threshold in dict_results_kernels[n_kernels]], color="blue")
-        plt.ylabel("Mean Absolute Error")
-        plt.xlabel("Threshold")
-        plt.title("Graphics Mean Absolute Errors")
-        plt.savefig(path_results_graph)
-        plt.close()
+        plot_graph(x=[threshold for threshold in dict_results_kernels[n_kernels]],
+                   y=[dict_results_kernels[n_kernels][threshold]["error"] for threshold in dict_results_kernels[n_kernels]],
+                   x_label="Threshold", y_label="Mean Absolute Error",
+                   title="Graphics Mean Absolute Errors",
+                   file_path=path_results_graph)
 
 def compare_performance_different_thresholds_by_BIC():
     dict_results_kernels = {}

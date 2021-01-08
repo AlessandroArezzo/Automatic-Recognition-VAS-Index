@@ -1,12 +1,11 @@
 import numpy as np
 import pandas as pd
 import matplotlib.pyplot as plt
-from sklearn import manifold
 
 from PreliminaryClustering import PreliminaryClustering
 from ModelSVR import ModelSVR
 from configuration import config
-from utils import get_training_and_test_idx, check_existing_paths, plotMatrix
+from utils import get_training_and_test_idx, check_existing_paths, plot_matrix, save_data_on_csv, save_GMM_mean_info
 """Script that allows you to train an SVR using a given number of kernels for preliminary 
 clustering."""
 
@@ -43,20 +42,18 @@ path_results = "data/classifier/" + sub_directory + "/"
 path_errors = path_results + "errors_tests/"
 path_gmm_means = path_results + "/gmm_means/"
 path_confusion_matrices = path_results + "confusion_matrices/"
+path_results_csv = path_results + "results.csv"
+path_conf_matrix_csv = path_results + "confusion_matrix.csv"
 n_jobs = config.n_jobs
-model = manifold.MDS(n_components=2, metric=True, n_init=4, random_state=1, max_iter=200, dissimilarity='euclidean')
 
 if __name__ == '__main__':
     dir_paths = [path_results, path_errors, path_confusion_matrices, path_gmm_means]
     if save_histo_figures:
         dir_paths.append(path_histo_figures)
     file_paths = [coord_df_path, seq_df_path]
-    out_df_scores = pd.DataFrame(columns=['#round', '#clusters', 'threshold', '#relevant_clusters', 'Mean Absolute Error'])
     check_existing_paths(dir_paths=dir_paths, file_paths=file_paths)
+    out_df_scores = pd.DataFrame(columns=['#round', '#clusters', 'threshold', '#relevant_clusters', 'Mean Absolute Error'])
     n_test = len(train_video_idx)
-    path_results_csv = path_results + "results.csv"
-    path_conf_matrix_csv = path_results + "confusion_matrix.csv"
-    path_histo_current = None
     errors = []
     confusion_matrix = np.zeros(shape=(11, 11))
     confusion_matrix_pain_levels = np.zeros(shape=(3, 3))
@@ -68,6 +65,7 @@ if __name__ == '__main__':
         print("- Round "+str(test_idx+1)+"/"+str(n_test)+" -")
         test_videos = test_video_idx[test_idx]
         train_videos = train_video_idx[test_idx]
+        path_histo_current = None
         if fit_by_bic:
             print("-- Execute preliminary clustering fitting GMM by BIC... --")
         else:
@@ -110,27 +108,12 @@ if __name__ == '__main__':
             confusion_matrix += current_confusion_matrix
             confusion_matrix_pain_levels += current_cm_pain_level
 
-        data_df_scores = np.hstack((np.array([test_idx+1, n_kernels_current_GMM, threshold_current_clustering, num_relevant_config, current_error]).reshape(1, -1)))
-        out_df_scores = out_df_scores.append(pd.Series(data_df_scores.reshape(-1), index=out_df_scores.columns),
-                                             ignore_index=True)
-        out_df_scores.to_csv(path_results_csv, index=False, header=True)
-        gmm_means = preliminary_clustering.gmm.means
-        columns = ["#kernel"] + ["ldk #"+str(ldks_idx) for ldks_idx in selected_lndks_idx]
-        out_gmm_means = pd.DataFrame(columns=[columns])
-        for kernel_idx in np.arange(len(gmm_means)):
-            data_gmm_means = np.hstack((np.array([kernel_idx] + [center for center in gmm_means[kernel_idx]]).reshape(1, -1)))
-            out_gmm_means = out_gmm_means.append(pd.Series(data_gmm_means.reshape(-1), index=out_gmm_means.columns),
-                                                 ignore_index=True)
-        current_path_gmm_means = path_gmm_means + "gmm_means_test_" + str(test_idx) + ".csv"
-        out_gmm_means.to_csv(current_path_gmm_means, index=False, header=True)
-        data_transformed = model.fit_transform(gmm_means)
-        plt.plot(data_transformed[:, 0], data_transformed[:, 1], '.b')
-        current_path_img_clusters = path_gmm_means + "gmm_clusters_test_" + str(test_idx) + ".png"
-        for k in np.arange(data_transformed.shape[0]):
-            plt.annotate(str(k), (data_transformed[k, 0], data_transformed[k, 1]))
-        plt.title('Position of %d clusters remapped in 2D with MSD' % (data_transformed.shape[0]))
-        plt.savefig(current_path_img_clusters)
-        plt.close()
+        out_df_scores = save_data_on_csv([test_idx+1, n_kernels_current_GMM, threshold_current_clustering, num_relevant_config, current_error],
+                                    out_df_scores, path_results_csv)
+        current_path_gmm_means_csv = path_gmm_means + "gmm_means_test_" + str(test_idx) + ".csv"
+        current_path_clusters_png = path_gmm_means + "gmm_clusters_test_" + str(test_idx) + ".png"
+        save_GMM_mean_info(preliminary_clustering.gmm.means, selected_lndks_idx, current_path_gmm_means_csv, current_path_clusters_png)
+
     mean_error = sum(errors) / n_test
     mean_error = round(mean_error, 3)
     print("Mean Absolute Error: " + str(mean_error))
@@ -141,10 +124,10 @@ if __name__ == '__main__':
     print("Mean absolute errors detected at each round saved in a csv file on path '" + path_results_csv+"'")
     print("Confusion matrices detected at each round saved in png files on path '" + path_confusion_matrices+"'")
 
-    plotMatrix(cm=confusion_matrix, labels=np.arange(0, 11), normalize=True, fname=path_conf_matrix)
+    plot_matrix(cm=confusion_matrix, labels=np.arange(0, 11), normalize=True, fname=path_conf_matrix)
     print("Overall confusion matrix saved in png files on path '" + path_conf_matrix+"'")
     labels_cm = ["no pain", "weak pain", "severe pain"]
-    plotMatrix(cm=confusion_matrix_pain_levels, labels=labels_cm, normalize=True, fname=path_conf_matrix_pain_levels)
+    plot_matrix(cm=confusion_matrix_pain_levels, labels=labels_cm, normalize=True, fname=path_conf_matrix_pain_levels)
     print("Overall confusion matrix on pain level saved in png files on path '" + path_conf_matrix_pain_levels + "'")
 
     plt.bar(np.arange(1, n_test+1), errors, color="blue")
@@ -156,4 +139,3 @@ if __name__ == '__main__':
     plt.savefig(path_errors)
     plt.close()
     print("Histogram of the mean absolute error detected saved in a png file on path '" + path_results+"'")
-

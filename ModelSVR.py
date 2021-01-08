@@ -3,7 +3,7 @@ import pickle
 import numpy as np
 from sklearn import svm
 from sklearn.model_selection import GridSearchCV
-from utils import plotMatrix
+from utils import plot_matrix
 
 """Class that deals with training an SVR starting from the relevant configurations 
 to characterize the VAS index obtained during the preliminary clustering phase. """
@@ -125,7 +125,7 @@ class ModelSVR:
         if path_scores_parameters is not None:
             out_df_scores.to_csv(path_scores_parameters, index=False, header=True)
         if path_scores_cm is not None:
-            plotMatrix(cm=confusion_matrix, labels=np.arange(0, 11), normalize=True, fname=path_scores_cm)
+            plot_matrix(cm=confusion_matrix, labels=np.arange(0, 11), normalize=True, fname=path_scores_cm)
         mean_error = round(sum_error / num_test_videos, 3)
         return mean_error, confusion_matrix
 
@@ -143,7 +143,7 @@ class ModelSVR:
             predicted_level_idx = dict_pain_level[vas_predicted]
             confusion_matrix[real_level_idx][predicted_level_idx] += 1
         if path_scores_cm is not None:
-            plotMatrix(cm=confusion_matrix, labels=labels_cm, normalize=True, fname=path_scores_cm)
+            plot_matrix(cm=confusion_matrix, labels=labels_cm, normalize=True, fname=path_scores_cm)
         return confusion_matrix
 
     def __calculate_sample_weights(self):
